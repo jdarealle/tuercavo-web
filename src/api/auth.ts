@@ -36,7 +36,7 @@ export class ApiError extends Error {
   }
 }
 
-async function request(path: string, init?: RequestInit): Promise<Response> {
+export async function request(path: string, init?: RequestInit): Promise<Response> {
   const headers = new Headers(init?.headers)
   headers.set('Accept', 'application/json')
   const response = await fetch(path, {
@@ -49,11 +49,15 @@ async function request(path: string, init?: RequestInit): Promise<Response> {
   if (!response.ok) {
     const body: unknown = await response.json().catch(() => null)
     const parsed = v.safeParse(errorSchema, body)
-    throw new ApiError(
+    const error = new ApiError(
       response.status,
       parsed.success ? parsed.output.error.code : 'unexpected_response',
       parsed.success ? parsed.output.error.message : 'La API no pudo completar la solicitud.',
     )
+    if (response.status === 401 && path !== '/api/auth/me') {
+      window.location.replace('/api/auth/login')
+    }
+    throw error
   }
 
   return response
