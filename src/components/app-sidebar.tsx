@@ -1,6 +1,6 @@
 import { Link, useLocation } from '@tanstack/react-router'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { FolderTree, House, LogOut, Monitor, Moon, Package, Sun, SunMoon } from 'lucide-react'
+import { Activity, FolderTree, House, KeyRound, LogOut, Monitor, Moon, Package, Shield, Sun, SunMoon, Truck, Users } from 'lucide-react'
 import { request, type Principal } from '@/api/auth'
 import { useTheme } from '@/components/theme-context'
 import {
@@ -38,6 +38,10 @@ export function AppSidebar({ principal }: { principal: Principal }) {
   })
   const canReadCategories = principal.permissions.includes('categories.read')
   const canReadProducts = principal.permissions.includes('products.read')
+  const canReadSuppliers = principal.permissions.includes('suppliers.read')
+  const canReadUsers = principal.permissions.includes('users.read')
+  const canReadRoles = principal.permissions.includes('roles.read')
+  const canReadPermissions = principal.permissions.includes('permissions.read')
 
   return (
     <Sidebar>
@@ -71,6 +75,11 @@ export function AppSidebar({ principal }: { principal: Principal }) {
                   <Package /> <span>Productos</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>}
+              {canReadSuppliers && <SidebarMenuItem><SidebarMenuButton render={<Link to="/suppliers" />} isActive={pathname === '/suppliers'}><Truck /> <span>Proveedores</span></SidebarMenuButton></SidebarMenuItem>}
+              {canReadUsers && <SidebarMenuItem><SidebarMenuButton render={<Link to="/users" />} isActive={pathname === '/users'}><Users /> <span>Usuarios</span></SidebarMenuButton></SidebarMenuItem>}
+              {canReadRoles && <SidebarMenuItem><SidebarMenuButton render={<Link to="/roles" />} isActive={pathname === '/roles'}><Shield /> <span>Roles</span></SidebarMenuButton></SidebarMenuItem>}
+              {canReadPermissions && <SidebarMenuItem><SidebarMenuButton render={<Link to="/permissions" />} isActive={pathname === '/permissions'}><KeyRound /> <span>Permisos</span></SidebarMenuButton></SidebarMenuItem>}
+              <SidebarMenuItem><SidebarMenuButton render={<Link to="/health" />} isActive={pathname === '/health'}><Activity /> <span>Estado de la API</span></SidebarMenuButton></SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

@@ -49,11 +49,16 @@ export const productSchema = v.object({
   updated_at: dateTime,
 })
 
-const supplierSchema = v.object({
+export const supplierSchema = v.object({
   public_id: uuid,
   code: v.string(),
   name: v.string(),
+  contact_name: v.nullable(v.string()),
+  email: v.nullable(v.string()),
+  phone: v.nullable(v.string()),
   status: statusSchema,
+  created_at: dateTime,
+  updated_at: dateTime,
 })
 
 const page = <T extends v.GenericSchema>(item: T) => v.object({
@@ -88,6 +93,13 @@ export const createProductSchema = v.object({
 })
 export const updateProductSchema = v.partial(createProductSchema)
 
+const code = v.pipe(v.string(), v.trim(), v.nonEmpty('El código es obligatorio.'), v.regex(/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/, 'Usa de 1 a 64 caracteres: letras, números, punto, guion o guion bajo; empieza con letra o número.'))
+const contactName = v.nullable(apiText(150))
+const email = v.nullable(v.pipe(v.string(), v.trim(), v.maxLength(254, 'Máximo 254 caracteres.'), v.email('Introduce un correo válido.'), v.check((value) => !/\s/u.test(value), 'El correo no admite espacios.')))
+const phone = v.nullable(v.pipe(v.string(), v.trim(), v.maxLength(32, 'Máximo 32 caracteres.'), v.regex(/^[+0-9(). xX-]*[0-9][+0-9(). xX-]*$/, 'Introduce un teléfono válido con al menos un dígito.')))
+export const createSupplierSchema = v.object({ code, name, contact_name: contactName, email, phone, status: statusSchema })
+export const updateSupplierSchema = v.partial(createSupplierSchema)
+
 export function fieldErrors(issues: readonly v.BaseIssue<unknown>[]): Record<string, string> {
   const errors: Record<string, string> = {}
   for (const issue of issues) {
@@ -106,6 +118,8 @@ export type CreateCategory = v.InferInput<typeof createCategorySchema>
 export type UpdateCategory = v.InferInput<typeof updateCategorySchema>
 export type CreateProduct = v.InferInput<typeof createProductSchema>
 export type UpdateProduct = v.InferInput<typeof updateProductSchema>
+export type CreateSupplier = v.InferInput<typeof createSupplierSchema>
+export type UpdateSupplier = v.InferInput<typeof updateSupplierSchema>
 
 export type CatalogFilters = {
   page?: number
@@ -159,6 +173,10 @@ export const products = {
 
 export const suppliers = {
   list: (filters: CatalogFilters = {}) => json(listUrl('suppliers', filters), supplierPageSchema),
+  get: (id: string) => json(`/api/suppliers/${encodeURIComponent(id)}`, supplierSchema),
+  create: (input: CreateSupplier) => json('/api/suppliers', supplierSchema, jsonBody('POST', v.parse(createSupplierSchema, input))),
+  update: (id: string, input: UpdateSupplier) => json(`/api/suppliers/${encodeURIComponent(id)}`, supplierSchema, jsonBody('PATCH', v.parse(updateSupplierSchema, input))),
+  remove: async (id: string) => { await request(`/api/suppliers/${encodeURIComponent(id)}`, { method: 'DELETE' }) },
 }
 
 export async function allCategories() {

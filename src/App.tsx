@@ -18,6 +18,11 @@ import { SignedOutPage } from './pages/signed-out-page'
 
 const CategoriesPage = lazyRouteComponent(() => import('./pages/categories-page'), 'CategoriesPage')
 const ProductsPage = lazyRouteComponent(() => import('./pages/products-page'), 'ProductsPage')
+const SuppliersPage = lazyRouteComponent(() => import('./pages/suppliers-page'), 'SuppliersPage')
+const UsersPage = lazyRouteComponent(() => import('./pages/users-page'), 'UsersPage')
+const RolesPage = lazyRouteComponent(() => import('./pages/access-page'), 'RolesPage')
+const PermissionsPage = lazyRouteComponent(() => import('./pages/access-page'), 'PermissionsPage')
+const HealthPage = lazyRouteComponent(() => import('./pages/health-page'), 'HealthPage')
 
 const rootRoute = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   component: Outlet,
@@ -60,6 +65,36 @@ const productsRoute = createRoute({
   component: () => <ProductsPage principal={authenticatedRoute.useRouteContext().principal} />,
 })
 
+const suppliersRoute = createRoute({
+  getParentRoute: () => authenticatedRoute,
+  path: '/suppliers',
+  component: () => <SuppliersPage principal={authenticatedRoute.useRouteContext().principal} />,
+})
+
+const usersRoute = createRoute({
+  getParentRoute: () => authenticatedRoute,
+  path: '/users',
+  component: () => <UsersPage principal={authenticatedRoute.useRouteContext().principal} />,
+})
+
+const rolesRoute = createRoute({
+  getParentRoute: () => authenticatedRoute,
+  path: '/roles',
+  component: () => <RolesPage principal={authenticatedRoute.useRouteContext().principal} />,
+})
+
+const permissionsRoute = createRoute({
+  getParentRoute: () => authenticatedRoute,
+  path: '/permissions',
+  component: () => <PermissionsPage principal={authenticatedRoute.useRouteContext().principal} />,
+})
+
+const healthRoute = createRoute({
+  getParentRoute: () => authenticatedRoute,
+  path: '/health',
+  component: HealthPage,
+})
+
 const signedOutRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/signed-out',
@@ -74,7 +109,7 @@ const loginRoute = createRoute({
 
 export const router = createRouter({
   routeTree: rootRoute.addChildren([
-    authenticatedRoute.addChildren([homeRoute, categoriesRoute, productsRoute]),
+    authenticatedRoute.addChildren([homeRoute, categoriesRoute, productsRoute, suppliersRoute, usersRoute, rolesRoute, permissionsRoute, healthRoute]),
     loginRoute,
     signedOutRoute,
   ]),

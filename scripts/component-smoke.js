@@ -17,7 +17,7 @@
     ],
   }
   const categories = [{ public_id: categoryId, name: 'Categoría inicial', description: null, status: 'active', created_at: now, updated_at: now }]
-  const suppliers = [{ public_id: supplierId, code: 'PROV-1', name: 'Proveedor inicial', status: 'active', created_at: now, updated_at: now }]
+  const suppliers = [{ public_id: supplierId, code: 'PROV-1', name: 'Proveedor inicial', contact_name: null, email: null, phone: null, status: 'active', created_at: now, updated_at: now }]
   const products = []
   const pageErrors = []
   let productCreateBody = null

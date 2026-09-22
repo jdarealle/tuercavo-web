@@ -1,6 +1,6 @@
 # Tuercavo Web
 
-SPA de Tuercavo basada en el contrato REST de [`tuercavo-api`](../tuercavo-api/README.md). Incluye autenticación con Microsoft Entra ID, inicio y los módulos de categorías y productos.
+SPA de Tuercavo basada en el contrato REST de [`tuercavo-api`](../tuercavo-api/README.md). Incluye autenticación con Microsoft Entra ID y vistas para los recursos de la API.
 
 ## Ejecutar en local
 
@@ -28,6 +28,10 @@ El menú lateral permite navegar, cambiar entre tema claro, oscuro o del sistema
 
 - `/categories`: consulta paginada y de detalle, búsqueda, filtro por estado, creación, edición parcial y eliminación de categorías. Los formularios validan las reglas de texto de la API y muestran conflictos de nombre o de referencias en contexto.
 - `/products`: consulta paginada y de detalle, búsqueda, filtros por estado, categoría y proveedor, creación, edición parcial y eliminación de productos. Los formularios validan SKU, precio y textos; permiten seleccionar categorías y proveedores activos o introducir sus UUID si no está disponible la lista.
+- `/suppliers`: consulta paginada y de detalle, búsqueda, filtro por estado, creación, edición parcial y eliminación. El formulario valida código, nombre y datos de contacto según la API.
+- `/users`: consulta paginada y de detalle del tenant actual, registro de identidades de Entra, edición de datos y acceso, y asignación de rol. El tenant se toma de la sesión. La API no ofrece eliminación de usuarios; desactivar revoca sus sesiones y la API protege al último administrador activo.
+- `/roles` y `/permissions`: consultas de solo lectura de los catálogos de autorización.
+- `/health`: estado del servicio y de su conexión a la base de datos.
 
 La interfaz utiliza los componentes generados de shadcn/ui con Base UI, sin modificar sus archivos base. Los botones y acciones se muestran según los permisos que devuelve `/api/auth/me`; la API conserva la validación y autorización definitivas. La API no ofrece un recurso `GET /`; sus rutas REST comienzan por `/api`.
 
@@ -38,6 +42,7 @@ pnpm lint
 pnpm build
 pnpm test:auth
 pnpm test:catalog
+pnpm test:modules
 ```
 
 Para probar los componentes en un navegador con `playwright-cli`, inicia `pnpm dev` en otra terminal y ejecuta:
