@@ -1,6 +1,6 @@
 import { Link, useLocation } from '@tanstack/react-router'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Activity, FolderTree, House, KeyRound, LogOut, Monitor, Moon, Package, Shield, Sun, SunMoon, Truck, Users } from 'lucide-react'
+import { Activity, FolderTree, LayoutDashboard, KeyRound, LogOut, Monitor, Moon, Package, Shield, Sun, SunMoon, Truck, Users } from 'lucide-react'
 import { request, type Principal } from '@/api/auth'
 import { useTheme } from '@/components/theme-context'
 import {
@@ -62,7 +62,7 @@ export function AppSidebar({ principal }: { principal: Principal }) {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton render={<Link to="/" />} isActive={pathname === '/'}>
-                  <House /> <span>Inicio</span>
+                  <LayoutDashboard /> <span>Dashboard</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               {canReadCategories && <SidebarMenuItem>

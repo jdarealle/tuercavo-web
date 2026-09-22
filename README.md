@@ -27,6 +27,7 @@ El menú lateral permite navegar, cambiar entre tema claro, oscuro o del sistema
 ## Módulos
 
 - `/categories`: consulta paginada y de detalle, búsqueda, filtro por estado, creación, edición parcial y eliminación de categorías. Los formularios validan las reglas de texto de la API y muestran conflictos de nombre o de referencias en contexto.
+- `/`: dashboard con totales de productos, categorías, proveedores y usuarios que el usuario puede consultar, además de una tabla con los primeros cinco productos. Los datos provienen de los listados REST; la API no tiene un endpoint de métricas agregado.
 - `/products`: consulta paginada y de detalle, búsqueda, filtros por estado, categoría y proveedor, creación, edición parcial y eliminación de productos. Los formularios validan SKU, precio y textos; permiten seleccionar categorías y proveedores activos o introducir sus UUID si no está disponible la lista.
 - `/suppliers`: consulta paginada y de detalle, búsqueda, filtro por estado, creación, edición parcial y eliminación. El formulario valida código, nombre y datos de contacto según la API.
 - `/users`: consulta paginada y de detalle del tenant actual, registro de identidades de Entra, edición de datos y acceso, y asignación de rol. El tenant se toma de la sesión. La API no ofrece eliminación de usuarios; desactivar revoca sus sesiones y la API protege al último administrador activo.

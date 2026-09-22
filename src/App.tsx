@@ -12,7 +12,7 @@ import { sessionQueryOptions, type Principal } from './api/auth'
 import { AppLayout } from './components/app-layout'
 import { AuthenticatedError } from './components/authenticated-error'
 import { SessionCheckError } from './lib/session-check-error'
-import { HomePage } from './HomePage'
+import { DashboardPage } from './pages/dashboard-page'
 import { LoginPage } from './pages/login-page'
 import { SignedOutPage } from './pages/signed-out-page'
 
@@ -47,10 +47,10 @@ const authenticatedRoute = createRoute({
   errorComponent: AuthenticatedError,
 })
 
-const homeRoute = createRoute({
+const dashboardRoute = createRoute({
   getParentRoute: () => authenticatedRoute,
   path: '/',
-  component: () => <HomePage principal={authenticatedRoute.useRouteContext().principal} />,
+  component: () => <DashboardPage principal={authenticatedRoute.useRouteContext().principal} />,
 })
 
 const categoriesRoute = createRoute({
@@ -109,7 +109,7 @@ const loginRoute = createRoute({
 
 export const router = createRouter({
   routeTree: rootRoute.addChildren([
-    authenticatedRoute.addChildren([homeRoute, categoriesRoute, productsRoute, suppliersRoute, usersRoute, rolesRoute, permissionsRoute, healthRoute]),
+    authenticatedRoute.addChildren([dashboardRoute, categoriesRoute, productsRoute, suppliersRoute, usersRoute, rolesRoute, permissionsRoute, healthRoute]),
     loginRoute,
     signedOutRoute,
   ]),
