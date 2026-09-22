@@ -55,7 +55,7 @@ export async function request(path: string, init?: RequestInit): Promise<Respons
       parsed.success ? parsed.output.error.message : 'La API no pudo completar la solicitud.',
     )
     if (response.status === 401 && path !== '/api/auth/me') {
-      window.location.replace('/api/auth/login')
+      window.location.replace('/login')
     }
     throw error
   }

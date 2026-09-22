@@ -1,5 +1,5 @@
 import { Link, useLocation } from '@tanstack/react-router'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { FolderTree, House, LogOut, Monitor, Moon, Package, Sun, SunMoon } from 'lucide-react'
 import { request, type Principal } from '@/api/auth'
 import { useTheme } from '@/components/theme-context'
@@ -25,12 +25,16 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
 
-export function AppSidebar({ principal, onSignedOut }: { principal: Principal, onSignedOut: () => void }) {
+export function AppSidebar({ principal }: { principal: Principal }) {
   const pathname = useLocation({ select: (location) => location.pathname })
   const { theme, setTheme } = useTheme()
+  const queryClient = useQueryClient()
   const logout = useMutation({
     mutationFn: () => request('/api/auth/logout', { method: 'POST' }),
-    onSuccess: onSignedOut,
+    onSuccess: () => {
+      queryClient.clear()
+      window.location.assign('/api/auth/entra-logout')
+    },
   })
   const canReadCategories = principal.permissions.includes('categories.read')
   const canReadProducts = principal.permissions.includes('products.read')

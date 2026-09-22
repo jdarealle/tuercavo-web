@@ -24,7 +24,13 @@
   let categoryUpdateBody = null
   let productUpdateBody = null
   let logoutCalls = 0
+  let entraLogoutCalls = 0
   let loginCalls = 0
+  let loginPrompt = null
+  let authenticated = false
+  let logoutFinished = false
+  let failInitialSessionCheck = true
+  let sessionChecksAfterLogout = 0
   page.on('pageerror', (error) => pageErrors.push(error.message))
 
   const respond = (route, data, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(data) })
@@ -60,14 +66,31 @@
       return [decodeURIComponent(key), decodeURIComponent(value || '')]
     }))
     const method = request.method()
-    if (pathname === '/api/auth/me' && method === 'GET') return respond(route, principal)
+    if (pathname === '/api/auth/me' && method === 'GET') {
+      if (failInitialSessionCheck) {
+        failInitialSessionCheck = false
+        return respond(route, { error: { code: 'unavailable', message: 'Temporalmente no disponible.' } }, 503)
+      }
+      if (logoutFinished) sessionChecksAfterLogout += 1
+      return authenticated
+        ? respond(route, principal)
+        : respond(route, { error: { code: 'unauthorized', message: 'Sin sesión.' } }, 401)
+    }
     if (pathname === '/api/auth/logout' && method === 'POST') {
       logoutCalls += 1
+      authenticated = false
+      logoutFinished = true
       return route.fulfill({ status: 204 })
+    }
+    if (pathname === '/api/auth/entra-logout' && method === 'GET') {
+      entraLogoutCalls += 1
+      return route.fulfill({ status: 303, headers: { location: `${origin}/signed-out` } })
     }
     if (pathname === '/api/auth/login' && method === 'GET') {
       loginCalls += 1
-      return route.fulfill({ status: 200, contentType: 'text/html', body: '<h1>Entra ID simulado</h1>' })
+      loginPrompt = params.prompt
+      authenticated = true
+      return route.fulfill({ status: 303, headers: { location: origin } })
     }
     if (pathname === '/api/suppliers' && method === 'GET') return respond(route, pageData(suppliers, params))
 
@@ -125,7 +148,19 @@
 
   const check = (condition, message) => { if (!condition) throw new Error(message) }
   await page.goto(origin)
+  await page.getByRole('heading', { name: 'No se pudo cargar la aplicación' }).waitFor()
+  check(new URL(page.url()).pathname === '/', 'Sesión: un 503 no debe redirigir al login')
+  await page.getByRole('button', { name: 'Reintentar' }).click()
+  await page.getByRole('link', { name: 'Iniciar sesión con Entra ID' }).waitFor()
+  check(new URL(page.url()).pathname === '/login', 'Login: debe ser la primera vista sin sesión')
+  check(loginCalls === 0, 'Login: no debe iniciar Entra automáticamente')
+  check(await page.locator('input').count() === 0, 'Login: no debe mostrar campos de credenciales')
+  await page.goto(`${origin}/categories`)
+  await page.getByRole('link', { name: 'Iniciar sesión con Entra ID' }).waitFor()
+  check(new URL(page.url()).pathname === '/login', 'Login: debe proteger también los módulos')
+  await page.getByRole('link', { name: 'Iniciar sesión con Entra ID' }).click()
   await page.getByRole('heading', { name: 'Bienvenido, Usuario de prueba' }).waitFor()
+  check(loginPrompt === 'select_account', 'Login: debe solicitar el selector de cuentas')
   check(await page.getByRole('link', { name: 'Inicio' }).count() === 1, 'Sidebar: falta Inicio')
   await page.getByRole('button', { name: 'Toggle Sidebar' }).click()
   check(await page.locator('[data-slot="sidebar"][data-state="collapsed"]').count() === 1, 'Sidebar: no colapsó')
@@ -228,8 +263,14 @@
 
   check(pageErrors.length === 0, `Errores de navegador: ${pageErrors.join('; ')}`)
   await page.getByRole('button', { name: 'Cerrar sesión' }).click()
-  await page.getByRole('heading', { name: 'Sesión cerrada' }).waitFor()
+  await page.getByRole('link', { name: 'Iniciar sesión con Entra ID' }).waitFor()
   check(logoutCalls === 1, 'Logout: debe enviar una petición POST a la API')
-  check(loginCalls === 0, 'Logout: no debe iniciar otra sesión automáticamente')
+  check(entraLogoutCalls === 1, 'Logout: debe navegar al cierre de sesión de Entra después del 204')
+  check(new URL(page.url()).pathname === '/login', 'Logout: debe volver a la vista pública de login')
+  check(sessionChecksAfterLogout === 0, 'Logout: la vista pública no debe comprobar la sesión')
+  check(loginCalls === 1, 'Logout: no debe iniciar otra sesión automáticamente')
+  await page.getByRole('link', { name: 'Iniciar sesión con Entra ID' }).click()
+  await page.getByRole('heading', { name: 'Bienvenido, Usuario de prueba' }).waitFor()
+  check(loginCalls === 2 && loginPrompt === 'select_account', 'Login: debe funcionar de nuevo después del logout')
   return 'OK: Sidebar, tema, navegación, tabla, badge, filtros, paginación, formularios, Select, Dialog, Sheet, DropdownMenu, AlertDialog y logout'
 })()

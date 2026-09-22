@@ -4,7 +4,7 @@ SPA de Tuercavo basada en el contrato REST de [`tuercavo-api`](../tuercavo-api/R
 
 ## Ejecutar en local
 
-1. Inicia la API según su README. Requiere PostgreSQL, Microsoft Entra ID y al menos un usuario activo registrado. Para volver a la raíz de esta SPA después del callback, configura `POST_LOGIN_REDIRECT_PATH=/` en la API. `OIDC_REDIRECT_URI` debe apuntar a `/api/auth/callback` bajo el mismo origen que sirve la SPA y coincidir exactamente con la URL registrada en Entra; con Vite en local, ese origen es `http://localhost:5173`.
+1. Inicia la API según su README. Requiere PostgreSQL, Microsoft Entra ID y al menos un usuario activo registrado. Para volver al inicio autenticado después del callback, configura `POST_LOGIN_REDIRECT_PATH=/` en la API. `OIDC_REDIRECT_URI` debe apuntar a `/api/auth/callback` bajo el mismo origen que sirve la SPA y coincidir exactamente con la URL registrada en Entra; con Vite en local, ese origen es `http://localhost:5173`. Para regresar a la vista de login después del cierre de sesión de Entra, configura `POST_LOGOUT_REDIRECT_URI=http://localhost:5173/login` en la API y registra esa URL exacta como otra Redirect URI **Web** en Entra. Si ya registraste `/signed-out`, esa ruta pública redirige a `/login`.
 2. Instala las dependencias y arranca la SPA:
 
    ```sh
@@ -18,11 +18,11 @@ SPA de Tuercavo basada en el contrato REST de [`tuercavo-api`](../tuercavo-api/R
 
 ## Contrato de autenticación
 
-La ruta raíz de TanStack Router protege todas las páginas de la SPA. Consulta `GET /api/auth/me` para obtener `public_id`, `email`, `full_name`, `tenant_id`, `object_id`, `role` y `permissions`. Si no hay sesión o falla la comprobación, el navegador abre directamente `GET /api/auth/login` y el backend inicia Entra ID. No hay pantalla propia de login ni mensaje de error de sesión. Las respuestas se validan con Valibot. TanStack Query conserva la sesión en memoria y la actualiza al volver a la pestaña y periódicamente.
+Un layout protegido de TanStack Router consulta `GET /api/auth/me` para obtener `public_id`, `email`, `full_name`, `tenant_id`, `object_id`, `role` y `permissions`. Solo un `401` indica que no hay sesión y lleva a `/login`. Si falla la red, la API o la validación de la respuesta, se muestra un estado de error con «Reintentar», sin presentar el fallo como un cierre de sesión. La vista `/login` ofrece como única acción «Iniciar sesión con Entra ID», que inicia el flujo del backend mediante `GET /api/auth/login?prompt=select_account`. Ese prompt permite elegir una cuenta, pero no exige volver a escribir la contraseña. `/signed-out` es un alias público que redirige a `/login`; ninguna de estas rutas inicia Entra automáticamente. No hay campos de credenciales propios. Las respuestas se validan con Valibot. TanStack Query conserva la sesión en memoria y la actualiza al volver a la pestaña y periódicamente.
 
 La API controla el callback, la cookie HttpOnly y el regreso mediante `POST_LOGIN_REDIRECT_PATH`. El valor predeterminado de la API es `/api/auth/me`; para esta SPA debe ser `/`. La SPA comprueba la sesión mediante `/api/auth/me`.
 
-El menú lateral permite navegar, cambiar entre tema claro, oscuro o del sistema y cerrar sesión con `POST /api/auth/logout`. Tras recibir `204`, la SPA limpia la sesión en memoria y muestra «Sesión cerrada». La API revoca la sesión local, pero su ruta `/api/auth/login` no solicita un inicio interactivo ni cierra la sesión de Microsoft. Redirigir allí inmediatamente podría crear otra sesión sin pedir credenciales. Al abrir de nuevo una ruta de la SPA, se iniciará el flujo normal de Entra.
+El menú lateral permite navegar, cambiar entre tema claro, oscuro o del sistema y cerrar sesión con `POST /api/auth/logout`. Tras recibir `204`, la SPA limpia la sesión en memoria y navega a `GET /api/auth/entra-logout`, que envía el navegador al cierre de sesión de Microsoft. Con `POST_LOGOUT_REDIRECT_URI`, Entra vuelve a la vista `/login`; sin esa configuración, muestra su propia pantalla de salida. El usuario elige cuándo iniciar otra sesión con el botón de Entra.
 
 ## Módulos
 
@@ -36,6 +36,7 @@ La interfaz utiliza los componentes generados de shadcn/ui con Base UI, sin modi
 ```sh
 pnpm lint
 pnpm build
+pnpm test:auth
 pnpm test:catalog
 ```
 

@@ -1,29 +1,26 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Outlet } from '@tanstack/react-router'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { sessionQueryOptions, type Principal } from '@/api/auth'
 import { AppSidebar } from '@/components/app-sidebar'
+import { SessionUnavailable } from '@/components/session-unavailable'
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 
 export function AppLayout({ principal }: { principal: Principal }) {
-  const [signedOut, setSignedOut] = useState(false)
-  const queryClient = useQueryClient()
-  const session = useQuery({ ...sessionQueryOptions, enabled: !signedOut, refetchInterval: signedOut ? false : 60_000 })
+  const session = useQuery({ ...sessionQueryOptions, refetchInterval: 60_000 })
 
   useEffect(() => {
-    if (!signedOut && (session.data === null || session.isError)) window.location.replace('/api/auth/login')
-  }, [session.data, session.isError, signedOut])
+    if (session.data === null) window.location.replace('/login')
+  }, [session.data])
 
-  if (signedOut) return <main><h1>Sesión cerrada</h1></main>
+  if (session.data === null) return null
+  if (session.isError) return <SessionUnavailable onRetry={() => { void session.refetch() }} />
 
   const user = session.data ?? principal
 
   return (
     <SidebarProvider>
-      <AppSidebar principal={user} onSignedOut={() => {
-        setSignedOut(true)
-        queryClient.clear()
-      }} />
+      <AppSidebar principal={user} />
       <main className="min-w-0 flex-1">
         <SidebarTrigger />
         <div className="p-4">
