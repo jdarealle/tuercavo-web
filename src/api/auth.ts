@@ -3,8 +3,8 @@ import * as v from 'valibot'
 
 const principalSchema = v.object({
   public_id: v.pipe(v.string(), v.uuid()),
-  email: v.pipe(v.string(), v.email()),
-  full_name: v.string(),
+  email: v.nullable(v.pipe(v.string(), v.email())),
+  full_name: v.nullable(v.string()),
   tenant_id: v.pipe(v.string(), v.uuid()),
   object_id: v.pipe(v.string(), v.uuid()),
   role: v.string(),

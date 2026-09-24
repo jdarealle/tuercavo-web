@@ -1,57 +1,88 @@
 # Tuercavo Web
 
-SPA de Tuercavo basada en el contrato REST de [`tuercavo-api`](../tuercavo-api/README.md). Incluye autenticación con Microsoft Entra ID y vistas para los recursos de la API.
+SPA para administrar el catálogo y el acceso de Tuercavo. Consume la API REST de Tuercavo bajo el mismo origen mediante el prefijo `/api`.
 
-## Ejecutar en local
+## Tecnologías
 
-1. Inicia la API según su README. Requiere PostgreSQL, Microsoft Entra ID y al menos un usuario activo registrado. Para volver al inicio autenticado después del callback, configura `POST_LOGIN_REDIRECT_PATH=/` en la API. `OIDC_REDIRECT_URI` debe apuntar a `/api/auth/callback` bajo el mismo origen que sirve la SPA y coincidir exactamente con la URL registrada en Entra; con Vite en local, ese origen es `http://localhost:5173`. Para regresar a la vista de login después del cierre de sesión de Entra, configura `POST_LOGOUT_REDIRECT_URI=http://localhost:5173/login` en la API y registra esa URL exacta como otra Redirect URI **Web** en Entra. Si ya registraste `/signed-out`, esa ruta pública redirige a `/login`.
-2. Instala las dependencias y arranca la SPA:
+- React 19 y TypeScript
+- Vite
+- TanStack Router
+- TanStack Query
+- Valibot
+- shadcn/ui con Base UI
+- Tailwind CSS
 
-   ```sh
-   pnpm install
-   pnpm dev
-   ```
+## Requisitos
 
-3. Abre la URL `http://localhost` que imprima Vite (normalmente `http://localhost:5173`). Usa **localhost** tanto para Vite como para la API; la cookie de sesión depende del host.
+- Node.js compatible con las dependencias declaradas en `package.json`
+- pnpm
+- `tuercavo-api` configurada con PostgreSQL y Microsoft Entra ID
+- Un App Role reconocido por la API asignado al usuario en Entra
 
-`API_PROXY_TARGET` permite cambiar la dirección de la API para el proxy de desarrollo; el valor predeterminado es `http://localhost:3000`. Si tu API escucha en `3001`, configura `API_PROXY_TARGET=http://localhost:3001` en el `.env` de este proyecto o al iniciar Vite. El proxy envía `/api/*` a ese destino. Reinicia Vite después de cambiar el `.env`. En producción, sirve la SPA y `/api/*` bajo el mismo origen, con un proxy inverso delante de la API.
+## Configuración
 
-## Contrato de autenticación
+Vite reenvía las solicitudes `/api/*` a `API_PROXY_TARGET`. El destino predeterminado es `http://localhost:3000`.
 
-Un layout protegido de TanStack Router consulta `GET /api/auth/me` para obtener `public_id`, `email`, `full_name`, `tenant_id`, `object_id`, `role` y `permissions`. Solo un `401` indica que no hay sesión y lleva a `/login`. Si falla la red, la API o la validación de la respuesta, se muestra un estado de error con «Reintentar», sin presentar el fallo como un cierre de sesión. La vista `/login` ofrece como única acción «Iniciar sesión con Entra ID», que inicia el flujo del backend mediante `GET /api/auth/login?prompt=select_account`. Ese prompt permite elegir una cuenta, pero no exige volver a escribir la contraseña. `/signed-out` es un alias público que redirige a `/login`; ninguna de estas rutas inicia Entra automáticamente. No hay campos de credenciales propios. Las respuestas se validan con Valibot. TanStack Query conserva la sesión en memoria y la actualiza al volver a la pestaña y periódicamente.
+```env
+API_PROXY_TARGET=http://localhost:3001
+```
 
-La API controla el callback, la cookie HttpOnly y el regreso mediante `POST_LOGIN_REDIRECT_PATH`. El valor predeterminado de la API es `/api/auth/me`; para esta SPA debe ser `/`. La SPA comprueba la sesión mediante `/api/auth/me`.
+La SPA y la API deben exponerse bajo el mismo origen para utilizar la cookie de sesión HttpOnly. En desarrollo, la configuración esperada en la API es:
 
-El menú lateral permite navegar, cambiar entre tema claro, oscuro o del sistema y cerrar sesión con `POST /api/auth/logout`. Tras recibir `204`, la SPA limpia la sesión en memoria y navega a `GET /api/auth/entra-logout`, que envía el navegador al cierre de sesión de Microsoft. Con `POST_LOGOUT_REDIRECT_URI`, Entra vuelve a la vista `/login`; sin esa configuración, muestra su propia pantalla de salida. El usuario elige cuándo iniciar otra sesión con el botón de Entra.
+```env
+OIDC_REDIRECT_URI=http://localhost:5173/api/auth/callback
+POST_LOGIN_REDIRECT_PATH=/
+POST_LOGOUT_REDIRECT_URI=http://localhost:5173/login
+```
 
-## Módulos
+Las URI deben estar registradas como Redirect URI de tipo **Web** en Microsoft Entra.
 
-- `/categories`: consulta paginada y de detalle, búsqueda, filtro por estado, creación, edición parcial y eliminación de categorías. Los formularios validan las reglas de texto de la API y muestran conflictos de nombre o de referencias en contexto.
-- `/`: dashboard con totales de productos, categorías, proveedores y usuarios que el usuario puede consultar, además de una tabla con los primeros cinco productos. Los datos provienen de los listados REST; la API no tiene un endpoint de métricas agregado.
-- `/products`: consulta paginada y de detalle, búsqueda, filtros por estado, categoría y proveedor, creación, edición parcial y eliminación de productos. Los formularios validan SKU, precio y textos; permiten seleccionar categorías y proveedores activos o introducir sus UUID si no está disponible la lista.
-- `/suppliers`: consulta paginada y de detalle, búsqueda, filtro por estado, creación, edición parcial y eliminación. El formulario valida código, nombre y datos de contacto según la API.
-- `/users`: consulta paginada y de detalle del tenant actual, registro de identidades de Entra, edición de datos y acceso, y asignación de rol. El tenant se toma de la sesión. La API no ofrece eliminación de usuarios; desactivar revoca sus sesiones y la API protege al último administrador activo.
-- `/roles` y `/permissions`: consultas de solo lectura de los catálogos de autorización.
-- `/health`: estado del servicio y de su conexión a la base de datos.
-
-La interfaz utiliza los componentes generados de shadcn/ui con Base UI, sin modificar sus archivos base. Los botones y acciones se muestran según los permisos que devuelve `/api/auth/me`; la API conserva la validación y autorización definitivas. La API no ofrece un recurso `GET /`; sus rutas REST comienzan por `/api`.
-
-## Verificación
+## Desarrollo
 
 ```sh
-pnpm lint
+pnpm install
+pnpm dev
+```
+
+La aplicación se sirve normalmente en `http://localhost:5173`.
+
+## Autenticación
+
+- `/login` inicia el flujo OIDC mediante `GET /api/auth/login?prompt=select_account`.
+- Las rutas privadas consultan `GET /api/auth/me`.
+- Un `401` redirige a `/login`.
+- Los errores de red, del servidor o del contrato permiten reintentar la consulta de sesión.
+- El cierre de sesión ejecuta `POST /api/auth/logout` y continúa en `GET /api/auth/entra-logout`.
+- `/signed-out` redirige a `/login`.
+
+La API administra el callback OIDC, la sesión, la cookie HttpOnly y la sincronización del usuario y su App Role de Entra. La SPA conserva la sesión consultada en TanStack Query y valida las respuestas con Valibot.
+
+## Rutas
+
+| Ruta | Función |
+| --- | --- |
+| `/` | Dashboard con totales y productos recientes. |
+| `/categories` | Consulta, búsqueda, creación, edición y eliminación de categorías. |
+| `/products` | Consulta, filtros, creación, edición y eliminación de productos. |
+| `/suppliers` | Consulta, búsqueda, creación, edición y eliminación de proveedores. |
+| `/users` | Consulta de usuarios y activación o desactivación del acceso local. |
+| `/roles` | Consulta de roles reconocidos por la API. |
+| `/permissions` | Consulta de permisos. |
+| `/health` | Estado de la API y su conexión con la base de datos. |
+| `/login` | Acceso mediante Microsoft Entra ID. |
+
+La navegación y las acciones disponibles dependen de los permisos entregados por `/api/auth/me`. La API realiza la autorización definitiva de cada operación.
+
+## Comandos
+
+```sh
+pnpm dev
 pnpm build
+pnpm preview
+pnpm lint
 pnpm test:auth
 pnpm test:catalog
 pnpm test:modules
 ```
 
-Para probar los componentes en un navegador con `playwright-cli`, inicia `pnpm dev` en otra terminal y ejecuta:
-
-```sh
-playwright-cli open about:blank --browser firefox
-playwright-cli run-code --filename=scripts/component-smoke.js
-playwright-cli close
-```
-
-La prueba intercepta `/api/*` con datos locales y recorre sidebar, tema, navegación, tablas, búsqueda, paginación, formularios, Select, Dialog, Sheet, menús, confirmaciones y cierre de sesión. No modifica la API. Si Firefox no está instalado para la versión local de `playwright-cli`, ejecuta `playwright-cli install-browser firefox` primero.
+Las pruebas validan los contratos de sesión, catálogo, proveedores y acceso local de usuarios.

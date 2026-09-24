@@ -35,6 +35,10 @@ try {
   mock(response(200, principal))
   assert.deepEqual(await getSession(), principal)
 
+  const principalWithoutMetadata = { ...principal, email: null, full_name: null }
+  mock(response(200, principalWithoutMetadata))
+  assert.deepEqual(await getSession(), principalWithoutMetadata)
+
   mock(response(401))
   assert.equal(await getSession(), null)
 
@@ -47,7 +51,7 @@ try {
   mock(response(200, { ...principal, public_id: 'inválido' }))
   await assert.rejects(getSession())
 
-  process.stdout.write('Sesión: 401 sin autenticar; fallos de red, API y contrato conservan el error: OK\n')
+  process.stdout.write('Sesión: metadata anulable, 401 sin autenticar y fallos de red, API y contrato: OK\n')
 } finally {
   globalThis.fetch = originalFetch
   await server.close()

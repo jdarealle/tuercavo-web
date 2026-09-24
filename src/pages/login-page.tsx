@@ -14,7 +14,7 @@ export function LoginPage() {
         <section className="flex flex-col gap-6" aria-labelledby="login-title">
           <div className="flex flex-col gap-2 text-center">
             <h1 id="login-title" className="text-2xl font-semibold">Inicia sesión en tu cuenta</h1>
-            <p className="text-sm text-muted-foreground">Usa tu cuenta de trabajo o escuela para acceder a Tuercavo.</p>
+            <p className="text-sm text-muted-foreground">Usa tu cuenta de trabajo o escuela con acceso y un rol asignados en Microsoft Entra.</p>
           </div>
           <a
             className={buttonVariants({ variant: 'outline', size: 'lg', className: 'w-full' })}
