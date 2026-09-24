@@ -7,9 +7,6 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "test:auth": "node scripts/auth-session.test.mjs",
-    "test:catalog": "node scripts/catalog-contract.test.mjs",
-    "test:modules": "node scripts/modules-contract.test.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

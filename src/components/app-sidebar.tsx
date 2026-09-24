@@ -40,7 +40,7 @@ export function AppSidebar({ principal }: { principal: Principal }) {
   const canReadProducts = principal.permissions.includes('products.read')
   const canReadSuppliers = principal.permissions.includes('suppliers.read')
   const canReadUsers = principal.permissions.includes('users.read')
-  const canReadRoles = principal.permissions.includes('roles.read')
+  const canOpenRoles = principal.permissions.includes('roles.read') || principal.permissions.includes('roles.create')
   const canReadPermissions = principal.permissions.includes('permissions.read')
 
   return (
@@ -77,7 +77,7 @@ export function AppSidebar({ principal }: { principal: Principal }) {
               </SidebarMenuItem>}
               {canReadSuppliers && <SidebarMenuItem><SidebarMenuButton render={<Link to="/suppliers" />} isActive={pathname === '/suppliers'}><Truck /> <span>Proveedores</span></SidebarMenuButton></SidebarMenuItem>}
               {canReadUsers && <SidebarMenuItem><SidebarMenuButton render={<Link to="/users" />} isActive={pathname === '/users'}><Users /> <span>Usuarios</span></SidebarMenuButton></SidebarMenuItem>}
-              {canReadRoles && <SidebarMenuItem><SidebarMenuButton render={<Link to="/roles" />} isActive={pathname === '/roles'}><Shield /> <span>Roles</span></SidebarMenuButton></SidebarMenuItem>}
+              {canOpenRoles && <SidebarMenuItem><SidebarMenuButton render={<Link to="/roles" />} isActive={pathname === '/roles'}><Shield /> <span>Roles</span></SidebarMenuButton></SidebarMenuItem>}
               {canReadPermissions && <SidebarMenuItem><SidebarMenuButton render={<Link to="/permissions" />} isActive={pathname === '/permissions'}><KeyRound /> <span>Permisos</span></SidebarMenuButton></SidebarMenuItem>}
               <SidebarMenuItem><SidebarMenuButton render={<Link to="/health" />} isActive={pathname === '/health'}><Activity /> <span>Estado de la API</span></SidebarMenuButton></SidebarMenuItem>
             </SidebarMenu>

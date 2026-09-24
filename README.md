@@ -17,7 +17,7 @@ SPA para administrar el catálogo y el acceso de Tuercavo. Consume la API REST d
 - Node.js compatible con las dependencias declaradas en `package.json`
 - pnpm
 - `tuercavo-api` configurada con PostgreSQL y Microsoft Entra ID
-- Un App Role reconocido por la API asignado al usuario en Entra
+- Una cuenta asignada a la aplicación empresarial en Microsoft Entra
 
 ## Configuración
 
@@ -55,7 +55,7 @@ La aplicación se sirve normalmente en `http://localhost:5173`.
 - El cierre de sesión ejecuta `POST /api/auth/logout` y continúa en `GET /api/auth/entra-logout`.
 - `/signed-out` redirige a `/login`.
 
-La API administra el callback OIDC, la sesión, la cookie HttpOnly y la sincronización del usuario y su App Role de Entra. La SPA conserva la sesión consultada en TanStack Query y valida las respuestas con Valibot.
+La API administra el callback OIDC, la sesión y la cookie HttpOnly. En el primer login crea al usuario con el rol local `consultor`; los siguientes logins conservan el rol asignado en Tuercavo. El primer administrador se promueve mediante el comando operativo `bootstrap-admin` de la API después de su primer login y debe volver a iniciar sesión. La SPA conserva la sesión consultada en TanStack Query y valida las respuestas con Valibot.
 
 ## Rutas
 
@@ -65,13 +65,17 @@ La API administra el callback OIDC, la sesión, la cookie HttpOnly y la sincroni
 | `/categories` | Consulta, búsqueda, creación, edición y eliminación de categorías. |
 | `/products` | Consulta, filtros, creación, edición y eliminación de productos. |
 | `/suppliers` | Consulta, búsqueda, creación, edición y eliminación de proveedores. |
-| `/users` | Consulta de usuarios y activación o desactivación del acceso local. |
-| `/roles` | Consulta de roles reconocidos por la API. |
+| `/users` | Consulta de usuarios, asignación de roles locales, desactivación con revocación de sesiones y reactivación del acceso local. |
+| `/roles` | Consulta, creación, cambio de nombre, retiro, reactivación y administración de permisos de roles. |
 | `/permissions` | Consulta de permisos. |
 | `/health` | Estado de la API y su conexión con la base de datos. |
 | `/login` | Acceso mediante Microsoft Entra ID. |
 
 La navegación y las acciones disponibles dependen de los permisos entregados por `/api/auth/me`. La API realiza la autorización definitiva de cada operación.
+
+Las acciones de acceso local usan `POST /api/users/{public_id}/deactivate` y `POST /api/users/{public_id}/reactivate`, sin cuerpo, con el permiso `users.update`. Después de desactivar a una persona, se retira su acceso a la aplicación en Entra. Para reactivarla, primero se restablece ese acceso en Entra; deberá iniciar sesión de nuevo. La API impide desactivar o cambiar el rol del último administrador activo.
+
+`PUT /api/users/{public_id}/role` asigna un rol local activo con `users.assign_role` y revoca las sesiones del usuario si cambia. `/api/roles` permite listar y crear roles; `/api/roles/{code}` permite consultarlos, renombrarlos, retirarlos y reactivarlos. `PUT /api/roles/{code}/permissions` reemplaza su conjunto completo de permisos. Roles y permisos son globales: una reducción revoca las sesiones de todos los usuarios de ese rol. `admin` y `consultor` son roles del sistema que permanecen activos; para retirar un rol personalizado primero se deben reasignar todos sus usuarios.
 
 ## Comandos
 
@@ -80,9 +84,4 @@ pnpm dev
 pnpm build
 pnpm preview
 pnpm lint
-pnpm test:auth
-pnpm test:catalog
-pnpm test:modules
 ```
-
-Las pruebas validan los contratos de sesión, catálogo, proveedores y acceso local de usuarios.
