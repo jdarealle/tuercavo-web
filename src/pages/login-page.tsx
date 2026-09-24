@@ -1,5 +1,5 @@
-import { Package } from 'lucide-react'
 import { buttonVariants } from '@/components/ui/button'
+import tuercavoMark from '@/assets/tuercavo-mark.svg'
 
 export function LoginPage() {
   return (
@@ -7,7 +7,7 @@ export function LoginPage() {
       <div className="flex w-full max-w-sm flex-col gap-8">
         <div className="flex items-center gap-2 self-center font-medium">
           <span className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <Package className="size-4" aria-hidden="true" />
+            <img src={tuercavoMark} className="size-5" alt="" aria-hidden="true" />
           </span>
           Tuercavo
         </div>
