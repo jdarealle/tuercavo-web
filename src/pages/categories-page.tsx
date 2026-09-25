@@ -145,7 +145,7 @@ export function CategoriesPage({ principal }: { principal: Principal }) {
 
   if (!canRead) return <p>No tienes permiso para consultar categorías.</p>
 
-  return <div className="space-y-6">
+  return <div className="flex min-h-0 flex-1 flex-col gap-6">
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div><h1 className="text-2xl font-semibold">Categorías</h1><p className="text-sm text-muted-foreground">Organiza el catálogo de productos.</p></div>
       {canCreate && <Button onClick={() => setEditor({})}><Plus /> Nueva categoría</Button>}
@@ -155,6 +155,7 @@ export function CategoriesPage({ principal }: { principal: Principal }) {
       <StatusSelect includeAll value={filters.status ?? 'all'} onChange={(value) => setFilters((current) => ({ ...current, page: 1, status: value === 'all' ? undefined : value }))} />
     </div>
     {list.isError && <ErrorMessage error={list.error} />}
+    <div className="min-h-0 min-w-0 flex-1 overflow-y-auto rounded-md border" role="region" aria-label="Listado de categorías" tabIndex={0}>
     <Table>
         <TableHeader><TableRow>
           <TableHead>Nombre</TableHead><TableHead>Descripción</TableHead><TableHead>Estado</TableHead><TableHead>Actualizada</TableHead>
@@ -181,6 +182,7 @@ export function CategoriesPage({ principal }: { principal: Principal }) {
           </TableRow>)}
         </TableBody>
     </Table>
+    </div>
     {list.isSuccess && <PageNavigation page={list.data.page} totalPages={list.data.total_pages} total={list.data.total} onPageChange={(page) => setFilters((current) => ({ ...current, page }))} />}
     {editor && <CategoryEditor key={editor.category?.public_id ?? 'new'} category={editor.category} onClose={() => setEditor(null)} />}
     {viewId && <CategoryDetails id={viewId} onClose={() => setViewId(null)} />}

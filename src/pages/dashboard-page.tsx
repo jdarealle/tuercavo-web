@@ -51,7 +51,7 @@ export function DashboardPage({ principal }: { principal: Principal }) {
     ))
   }
 
-  return <div className="flex flex-col gap-6">
+  return <div className="flex flex-col gap-6 lg:min-h-0 lg:flex-1">
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div>
         <h1 className="text-2xl font-semibold">Dashboard</h1>
@@ -67,14 +67,15 @@ export function DashboardPage({ principal }: { principal: Principal }) {
       {canReadUsers && <MetricCard title="Usuarios" total={userList.data?.total} pending={userList.isPending} error={userList.error} icon={Users} to="/users" />}
     </div>
 
-    {canReadProducts && <Card>
+    {canReadProducts && <Card className="lg:min-h-0 lg:flex-1">
       <CardHeader>
         <CardTitle><h2>Productos del catálogo</h2></CardTitle>
         <CardDescription>Primeros cinco productos en el orden del listado de la API.</CardDescription>
         <CardAction><Button variant="outline" size="sm" render={<Link to="/products" />}>Ver todos</Button></CardAction>
       </CardHeader>
-      <CardContent>
+      <CardContent className="lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
         {productList.isError && <ErrorMessage error={productList.error} />}
+        <div className="min-w-0 overflow-y-auto rounded-md border lg:min-h-0 lg:flex-1" role="region" aria-label="Productos del catálogo" tabIndex={0}>
         <Table>
           <TableHeader><TableRow><TableHead>SKU</TableHead><TableHead>Nombre</TableHead><TableHead>Precio</TableHead><TableHead>Estado</TableHead></TableRow></TableHeader>
           <TableBody>
@@ -88,6 +89,7 @@ export function DashboardPage({ principal }: { principal: Principal }) {
             </TableRow>)}
           </TableBody>
         </Table>
+        </div>
       </CardContent>
       <CardFooter>El listado completo está disponible en Productos.</CardFooter>
     </Card>}

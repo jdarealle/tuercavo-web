@@ -125,12 +125,13 @@ export function UsersPage({ principal }: { principal: Principal }) {
   const isDeactivation = accessUser?.is_active === true
   const lastAdminConflict = access.error instanceof ApiError && access.error.status === 409
 
-  return <div className="flex flex-col gap-6">
+  return <div className="flex min-h-0 flex-1 flex-col gap-6">
     <div>
       <h1 className="text-2xl font-semibold">Usuarios</h1>
       <p className="text-sm text-muted-foreground">Los usuarios aparecen después de su primer login con el rol local consultor. Aquí puedes administrar su acceso y asignarles otro rol.</p>
     </div>
     {list.isError && <ErrorMessage error={list.error} />}
+    <div className="min-h-0 min-w-0 flex-1 overflow-y-auto rounded-md border" role="region" aria-label="Listado de usuarios" tabIndex={0}>
     <Table><TableHeader><TableRow><TableHead>Nombre</TableHead><TableHead>Correo</TableHead><TableHead>Rol local</TableHead><TableHead>Acceso local</TableHead><TableHead>Actualizado</TableHead><TableHead>Acciones</TableHead></TableRow></TableHeader><TableBody>
       {list.isPending && <TableRow><TableCell colSpan={6}>Cargando usuarios…</TableCell></TableRow>}
       {list.isSuccess && !list.data.data.length && <TableRow><TableCell colSpan={6}>Ningún usuario ha iniciado sesión todavía.</TableCell></TableRow>}
@@ -153,6 +154,7 @@ export function UsersPage({ principal }: { principal: Principal }) {
         </TableRow>
       })}
     </TableBody></Table>
+    </div>
     {list.isSuccess && <PageNavigation page={list.data.page} totalPages={list.data.total_pages} total={list.data.total} onPageChange={setPage} />}
     {viewId && <UserDetails id={viewId} onClose={() => setViewId(null)} />}
     {roleUser && <UserRoleEditor key={roleUser.public_id} user={roleUser} principal={principal} onClose={() => setRoleUser(null)} />}

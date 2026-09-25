@@ -139,10 +139,11 @@ export function SuppliersPage({ principal }: { principal: Principal }) {
     },
   })
   if (!canRead) return <p>No tienes permiso para consultar proveedores.</p>
-  return <div className="space-y-6">
+  return <div className="flex min-h-0 flex-1 flex-col gap-6">
     <div className="flex flex-wrap items-start justify-between gap-4"><div><h1 className="text-2xl font-semibold">Proveedores</h1><p className="text-sm text-muted-foreground">Consulta y administra los proveedores del catálogo.</p></div>{canCreate && <Button onClick={() => setEditor({})}><Plus /> Nuevo proveedor</Button>}</div>
     <div className="flex flex-wrap items-center gap-3"><SearchBar value={searchDraft} onChange={setSearchDraft} onSearch={() => setFilters((current) => ({ ...current, page: 1, search: searchDraft.trim() || undefined }))} placeholder="Buscar por nombre o código" /><StatusSelect includeAll value={filters.status ?? 'all'} onChange={(value) => setFilters((current) => ({ ...current, page: 1, status: value === 'all' ? undefined : value }))} /></div>
     {list.isError && <ErrorMessage error={list.error} />}
+    <div className="min-h-0 min-w-0 flex-1 overflow-y-auto rounded-md border" role="region" aria-label="Listado de proveedores" tabIndex={0}>
     <Table><TableHeader><TableRow><TableHead>Código</TableHead><TableHead>Nombre</TableHead><TableHead>Contacto</TableHead><TableHead>Correo</TableHead><TableHead>Estado</TableHead><TableHead>Acciones</TableHead></TableRow></TableHeader><TableBody>
       {list.isPending && <TableRow><TableCell colSpan={6}>Cargando proveedores…</TableCell></TableRow>}
       {list.isSuccess && !list.data.data.length && <TableRow><TableCell colSpan={6}>No hay proveedores para mostrar.</TableCell></TableRow>}
@@ -150,6 +151,7 @@ export function SuppliersPage({ principal }: { principal: Principal }) {
         <DropdownMenu><DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label={`Acciones de ${supplier.name}`} />}><Ellipsis /></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onClick={() => setViewId(supplier.public_id)}>Ver detalle</DropdownMenuItem>{canUpdate && <DropdownMenuItem onClick={() => setEditor({ supplier })}>Editar</DropdownMenuItem>}{canDelete && <DropdownMenuItem variant="destructive" onClick={() => setToDelete(supplier)}>Eliminar</DropdownMenuItem>}</DropdownMenuContent></DropdownMenu>
       </TableCell></TableRow>)}
     </TableBody></Table>
+    </div>
     {list.isSuccess && <PageNavigation page={list.data.page} totalPages={list.data.total_pages} total={list.data.total} onPageChange={(page) => setFilters((current) => ({ ...current, page }))} />}
     {editor && <SupplierEditor key={editor.supplier?.public_id ?? 'new'} supplier={editor.supplier} onClose={() => setEditor(null)} />}
     {viewId && <SupplierDetails id={viewId} onClose={() => setViewId(null)} />}

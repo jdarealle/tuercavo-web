@@ -203,10 +203,11 @@ export function RolesPage({ principal }: { principal: Principal }) {
   const [permissionRole, setPermissionRole] = useState<Role | null>(null)
   const list = useQuery({ queryKey: ['roles', 'list'], queryFn: roles.list, enabled: canRead, staleTime: 300_000 })
   if (!canRead && !canCreate) return <p>No tienes permiso para administrar roles.</p>
-  return <div className="flex flex-col gap-6">
+  return <div className="flex min-h-0 flex-1 flex-col gap-6">
     <div className="flex flex-wrap items-start justify-between gap-4"><div><h1 className="text-2xl font-semibold">Roles</h1><p className="text-sm text-muted-foreground">Los roles y sus permisos se administran en Tuercavo y se aplican a todos los tenants.</p></div>{canCreate && <Button onClick={() => setEditor('new')}><Plus data-icon="inline-start" /> Nuevo rol</Button>}</div>
     {canRead && <>
       {list.isError && <ErrorMessage error={list.error} />}
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto rounded-md border" role="region" aria-label="Listado de roles" tabIndex={0}>
       <Table><TableHeader><TableRow><TableHead>Código</TableHead><TableHead>Nombre</TableHead><TableHead>Estado</TableHead><TableHead>Tipo</TableHead><TableHead>Permisos</TableHead><TableHead>Acciones</TableHead></TableRow></TableHeader><TableBody>
         {list.isPending && <TableRow><TableCell colSpan={6}>Cargando roles…</TableCell></TableRow>}
         {list.isSuccess && !list.data.length && <TableRow><TableCell colSpan={6}>No hay roles para mostrar.</TableCell></TableRow>}
@@ -220,6 +221,7 @@ export function RolesPage({ principal }: { principal: Principal }) {
           </DropdownMenuGroup></DropdownMenuContent>
         </DropdownMenu></TableCell></TableRow>)}
       </TableBody></Table>
+      </div>
     </>}
     {editor && <RoleEditor key={editor === 'new' ? 'new' : editor.code} role={editor === 'new' ? undefined : editor} onClose={() => setEditor(null)} />}
     {viewCode && <RoleDetails code={viewCode} onClose={() => setViewCode(null)} />}
@@ -232,5 +234,11 @@ export function PermissionsPage({ principal }: { principal: Principal }) {
   const canRead = principal.permissions.includes('permissions.read')
   const list = useQuery({ queryKey: ['permissions'], queryFn: permissions.list, enabled: canRead, staleTime: 300_000 })
   if (!canRead) return <p>No tienes permiso para consultar permisos.</p>
-  return <div className="flex flex-col gap-6"><div><h1 className="text-2xl font-semibold">Permisos</h1><p className="text-sm text-muted-foreground">Operaciones disponibles en la API para configurar los roles.</p></div>{list.isError && <ErrorMessage error={list.error} />}<Table><TableHeader><TableRow><TableHead>Código</TableHead><TableHead>Descripción</TableHead></TableRow></TableHeader><TableBody>{list.isPending && <TableRow><TableCell colSpan={2}>Cargando permisos…</TableCell></TableRow>}{list.isSuccess && !list.data.length && <TableRow><TableCell colSpan={2}>No hay permisos para mostrar.</TableCell></TableRow>}{list.data?.map((permission) => <TableRow key={permission.code}><TableCell>{permission.code}</TableCell><TableCell>{permission.description}</TableCell></TableRow>)}</TableBody></Table></div>
+  return <div className="flex min-h-0 flex-1 flex-col gap-6">
+    <div><h1 className="text-2xl font-semibold">Permisos</h1><p className="text-sm text-muted-foreground">Operaciones disponibles en la API para configurar los roles.</p></div>
+    {list.isError && <ErrorMessage error={list.error} />}
+    <div className="min-h-0 min-w-0 flex-1 overflow-y-auto rounded-md border" role="region" aria-label="Listado de permisos" tabIndex={0}>
+      <Table><TableHeader><TableRow><TableHead>Código</TableHead><TableHead>Descripción</TableHead></TableRow></TableHeader><TableBody>{list.isPending && <TableRow><TableCell colSpan={2}>Cargando permisos…</TableCell></TableRow>}{list.isSuccess && !list.data.length && <TableRow><TableCell colSpan={2}>No hay permisos para mostrar.</TableCell></TableRow>}{list.data?.map((permission) => <TableRow key={permission.code}><TableCell>{permission.code}</TableCell><TableCell>{permission.description}</TableCell></TableRow>)}</TableBody></Table>
+    </div>
+  </div>
 }

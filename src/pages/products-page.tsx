@@ -253,7 +253,7 @@ export function ProductsPage({ principal }: { principal: Principal }) {
     ...(supplierList.data ?? []).map((item) => ({ label: item.name, value: item.public_id })),
   ]
 
-  return <div className="space-y-6">
+  return <div className="flex min-h-0 flex-1 flex-col gap-6">
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div><h1 className="text-2xl font-semibold">Productos</h1><p className="text-sm text-muted-foreground">Consulta y administra los artículos del catálogo.</p></div>
       {canCreate && <Button onClick={() => setEditor({})}><Plus /> Nuevo producto</Button>}
@@ -273,6 +273,7 @@ export function ProductsPage({ principal }: { principal: Principal }) {
     {list.isError && <ErrorMessage error={list.error} />}
     {categoryList.isError && canReadCategories && <ErrorMessage error={categoryList.error} />}
     {supplierList.isError && canReadSuppliers && <ErrorMessage error={supplierList.error} />}
+    <div className="min-h-0 min-w-0 flex-1 overflow-y-auto rounded-md border" role="region" aria-label="Listado de productos" tabIndex={0}>
     <Table>
         <TableHeader><TableRow>
           <TableHead>SKU</TableHead><TableHead>Nombre</TableHead><TableHead>Marca</TableHead><TableHead>Categoría</TableHead><TableHead>Unidad</TableHead><TableHead>Precio</TableHead><TableHead>Estado</TableHead>
@@ -302,6 +303,7 @@ export function ProductsPage({ principal }: { principal: Principal }) {
           </TableRow>)}
         </TableBody>
     </Table>
+    </div>
     {list.isSuccess && <PageNavigation page={list.data.page} totalPages={list.data.total_pages} total={list.data.total} onPageChange={(page) => setFilters((current) => ({ ...current, page }))} />}
     {editor && <ProductEditor key={editor.product?.public_id ?? 'new'} product={editor.product} categories={categoryList.data ?? []} suppliers={supplierList.data ?? []} canReadCategories={canReadCategories} canReadSuppliers={canReadSuppliers} categoriesLoading={categoryList.isPending} categoriesError={categoryList.isError} suppliersLoading={supplierList.isPending} suppliersError={supplierList.isError} onClose={() => setEditor(null)} />}
     {viewId && <ProductDetails id={viewId} categoryNames={categoryNames} supplierNames={supplierNames} onClose={() => setViewId(null)} />}

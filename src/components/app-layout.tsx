@@ -29,9 +29,9 @@ export function AppLayout({ principal }: { principal: Principal }) {
   return (
     <SidebarProvider>
       <AppSidebar principal={user} />
-      <main className="min-w-0 flex-1">
-        <SidebarTrigger />
-        <div className="p-4">
+      <main className="flex h-dvh min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <SidebarTrigger className="self-start" />
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-4">
           <Outlet />
         </div>
       </main>
