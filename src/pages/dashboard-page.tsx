@@ -5,7 +5,7 @@ import type { Principal } from '@/api/auth'
 import { categories, products, suppliers } from '@/api/catalog'
 import { users } from '@/api/users'
 import { ErrorMessage, StatusBadge } from '@/components/catalog-ui'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -29,7 +29,7 @@ function MetricCard({ title, total, pending, error, icon: Icon, to }: {
     <CardContent>
       {pending ? <Skeleton className="h-9 w-20" /> : error ? <ErrorMessage error={error} /> : <p className="text-3xl font-semibold tabular-nums">{new Intl.NumberFormat('es-MX').format(total ?? 0)}</p>}
     </CardContent>
-    <CardFooter><Button variant="link" size="sm" render={<Link to={to} />}>Ver módulo</Button></CardFooter>
+    <CardFooter><Link to={to} className={buttonVariants({ variant: 'link', size: 'sm' })}>Ver módulo</Link></CardFooter>
   </Card>
 }
 
@@ -71,7 +71,7 @@ export function DashboardPage({ principal }: { principal: Principal }) {
       <CardHeader>
         <CardTitle><h2>Productos del catálogo</h2></CardTitle>
         <CardDescription>Primeros cinco productos en el orden del listado de la API.</CardDescription>
-        <CardAction><Button variant="outline" size="sm" render={<Link to="/products" />}>Ver todos</Button></CardAction>
+        <CardAction><Link to="/products" className={buttonVariants({ variant: 'outline', size: 'sm' })}>Ver todos</Link></CardAction>
       </CardHeader>
       <CardContent className="lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
         {productList.isError && <ErrorMessage error={productList.error} />}

@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import type { QueryClient } from '@tanstack/react-query'
 import {
   Navigate,
@@ -5,7 +6,6 @@ import {
   createRootRouteWithContext,
   createRoute,
   createRouter,
-  lazyRouteComponent,
   redirect,
 } from '@tanstack/react-router'
 import { sessionQueryOptions, type Principal } from './api/auth'
@@ -13,16 +13,9 @@ import { AppLayout } from './components/app-layout'
 import { AuthenticatedError } from './components/authenticated-error'
 import { SessionCheckError } from './lib/session-check-error'
 import { DashboardPage } from './pages/dashboard-page'
+import { CategoriesPage, HealthPage, PermissionsPage, ProductsPage, RolesPage, SuppliersPage, UsersPage } from './pages/lazy-pages'
 import { LoginPage } from './pages/login-page'
 import { SignedOutPage } from './pages/signed-out-page'
-
-const CategoriesPage = lazyRouteComponent(() => import('./pages/categories-page'), 'CategoriesPage')
-const ProductsPage = lazyRouteComponent(() => import('./pages/products-page'), 'ProductsPage')
-const SuppliersPage = lazyRouteComponent(() => import('./pages/suppliers-page'), 'SuppliersPage')
-const UsersPage = lazyRouteComponent(() => import('./pages/users-page'), 'UsersPage')
-const RolesPage = lazyRouteComponent(() => import('./pages/access-page'), 'RolesPage')
-const PermissionsPage = lazyRouteComponent(() => import('./pages/access-page'), 'PermissionsPage')
-const HealthPage = lazyRouteComponent(() => import('./pages/health-page'), 'HealthPage')
 
 const rootRoute = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   component: Outlet,
@@ -56,43 +49,43 @@ const dashboardRoute = createRoute({
 const categoriesRoute = createRoute({
   getParentRoute: () => authenticatedRoute,
   path: '/categories',
-  component: () => <CategoriesPage principal={authenticatedRoute.useRouteContext().principal} />,
+  component: () => <Suspense fallback={<p>Cargando categorías…</p>}><CategoriesPage principal={authenticatedRoute.useRouteContext().principal} /></Suspense>,
 })
 
 const productsRoute = createRoute({
   getParentRoute: () => authenticatedRoute,
   path: '/products',
-  component: () => <ProductsPage principal={authenticatedRoute.useRouteContext().principal} />,
+  component: () => <Suspense fallback={<p>Cargando productos…</p>}><ProductsPage principal={authenticatedRoute.useRouteContext().principal} /></Suspense>,
 })
 
 const suppliersRoute = createRoute({
   getParentRoute: () => authenticatedRoute,
   path: '/suppliers',
-  component: () => <SuppliersPage principal={authenticatedRoute.useRouteContext().principal} />,
+  component: () => <Suspense fallback={<p>Cargando proveedores…</p>}><SuppliersPage principal={authenticatedRoute.useRouteContext().principal} /></Suspense>,
 })
 
 const usersRoute = createRoute({
   getParentRoute: () => authenticatedRoute,
   path: '/users',
-  component: () => <UsersPage principal={authenticatedRoute.useRouteContext().principal} />,
+  component: () => <Suspense fallback={<p>Cargando usuarios…</p>}><UsersPage principal={authenticatedRoute.useRouteContext().principal} /></Suspense>,
 })
 
 const rolesRoute = createRoute({
   getParentRoute: () => authenticatedRoute,
   path: '/roles',
-  component: () => <RolesPage principal={authenticatedRoute.useRouteContext().principal} />,
+  component: () => <Suspense fallback={<p>Cargando roles…</p>}><RolesPage principal={authenticatedRoute.useRouteContext().principal} /></Suspense>,
 })
 
 const permissionsRoute = createRoute({
   getParentRoute: () => authenticatedRoute,
   path: '/permissions',
-  component: () => <PermissionsPage principal={authenticatedRoute.useRouteContext().principal} />,
+  component: () => <Suspense fallback={<p>Cargando permisos…</p>}><PermissionsPage principal={authenticatedRoute.useRouteContext().principal} /></Suspense>,
 })
 
 const healthRoute = createRoute({
   getParentRoute: () => authenticatedRoute,
   path: '/health',
-  component: HealthPage,
+  component: () => <Suspense fallback={<p>Cargando estado de la API…</p>}><HealthPage /></Suspense>,
 })
 
 const signedOutRoute = createRoute({
