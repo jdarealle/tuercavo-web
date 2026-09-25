@@ -14,6 +14,7 @@ export const setPermissionsSchema = v.object({
   permissions: v.pipe(v.array(v.string()), v.check((values) => new Set(values).size === values.length, 'No repitas códigos de permiso.')),
 })
 export const assignRoleSchema = v.object({ role: roleCodeSchema })
+export const assignDepartmentSchema = v.object({ department_public_id: v.nullable(uuid) })
 
 export const userSchema = v.object({
   public_id: uuid,
@@ -22,6 +23,7 @@ export const userSchema = v.object({
   email: v.nullable(v.string()),
   full_name: v.nullable(v.string()),
   role: roleCodeSchema,
+  department_public_id: v.nullable(uuid),
   is_active: v.boolean(),
   created_at: v.string(),
   updated_at: v.string(),
@@ -64,6 +66,7 @@ export const users = {
   deactivate: (id: string) => json(`/api/users/${encodeURIComponent(id)}/deactivate`, userSchema, { method: 'POST' }),
   reactivate: (id: string) => json(`/api/users/${encodeURIComponent(id)}/reactivate`, userSchema, { method: 'POST' }),
   assignRole: (id: string, role: string) => json(`/api/users/${encodeURIComponent(id)}/role`, userSchema, jsonBody('PUT', v.parse(assignRoleSchema, { role }))),
+  assignDepartment: (id: string, department_public_id: string | null) => json(`/api/users/${encodeURIComponent(id)}/department`, userSchema, jsonBody('PUT', v.parse(assignDepartmentSchema, { department_public_id }))),
 }
 
 export const roles = {

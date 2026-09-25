@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Link, useLocation } from '@tanstack/react-router'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Activity, ChevronsUpDown, CircleUserRound, FolderTree, LayoutDashboard, KeyRound, LogOut, Monitor, Moon, Package, Shield, Sun, SunMoon, Truck, UserRound, Users } from 'lucide-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Activity, Building2, ChevronsUpDown, CircleUserRound, FolderTree, LayoutDashboard, KeyRound, LogOut, Monitor, Moon, Package, Shield, Sun, SunMoon, Truck, UserRound, Users } from 'lucide-react'
 import { request, type Principal } from '@/api/auth'
+import { myDepartmentQueryOptions } from '@/api/departments'
 import { AccountDialog } from '@/components/account-dialog'
 import { useTheme } from '@/components/theme-context'
 import {
@@ -37,6 +38,7 @@ export function AppSidebar({ principal }: { principal: Principal }) {
   const { theme, setTheme } = useTheme()
   const [accountOpen, setAccountOpen] = useState(false)
   const queryClient = useQueryClient()
+  const myDepartment = useQuery(myDepartmentQueryOptions(principal.department_public_id))
   const logout = useMutation({
     mutationFn: () => request('/api/auth/logout', { method: 'POST' }),
     onSuccess: () => {
@@ -47,11 +49,19 @@ export function AppSidebar({ principal }: { principal: Principal }) {
   const canReadCategories = principal.permissions.includes('categories.read')
   const canReadProducts = principal.permissions.includes('products.read')
   const canReadSuppliers = principal.permissions.includes('suppliers.read')
+  const canReadDepartments = principal.role === 'admin' && principal.permissions.includes('departments.read')
   const canReadUsers = principal.permissions.includes('users.read')
   const canOpenRoles = principal.permissions.includes('roles.read') || principal.permissions.includes('roles.create')
   const canReadPermissions = principal.permissions.includes('permissions.read')
   const displayName = principal.full_name?.trim() || principal.email || 'Usuario'
   const displayEmail = principal.email || 'Correo no disponible'
+  const departmentName = principal.department_public_id === null
+    ? 'Sin departamento'
+    : myDepartment.isPending
+      ? 'Cargando departamento…'
+      : myDepartment.data === null
+        ? 'Sin departamento'
+        : myDepartment.data?.name ?? 'Departamento no disponible'
 
   return (
     <Sidebar collapsible="icon">
@@ -62,7 +72,7 @@ export function AppSidebar({ principal }: { principal: Principal }) {
               <img src="/favicon.svg" alt="" className="size-8 shrink-0" />
               <span className="grid min-w-0 flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="truncate font-semibold">Tuercavo</span>
-                <span className="truncate text-xs">Empresa</span>
+                <span className="truncate text-xs" title={departmentName}>{departmentName}</span>
               </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -89,6 +99,7 @@ export function AppSidebar({ principal }: { principal: Principal }) {
                 </SidebarMenuButton>
               </SidebarMenuItem>}
               {canReadSuppliers && <SidebarMenuItem><SidebarMenuButton render={<Link to="/suppliers" />} isActive={pathname === '/suppliers'} tooltip="Proveedores"><Truck /> <span>Proveedores</span></SidebarMenuButton></SidebarMenuItem>}
+              {canReadDepartments && <SidebarMenuItem><SidebarMenuButton render={<Link to="/departments" />} isActive={pathname === '/departments'} tooltip="Departamentos"><Building2 /> <span>Departamentos</span></SidebarMenuButton></SidebarMenuItem>}
               {canReadUsers && <SidebarMenuItem><SidebarMenuButton render={<Link to="/users" />} isActive={pathname === '/users'} tooltip="Usuarios"><Users /> <span>Usuarios</span></SidebarMenuButton></SidebarMenuItem>}
               {canOpenRoles && <SidebarMenuItem><SidebarMenuButton render={<Link to="/roles" />} isActive={pathname === '/roles'} tooltip="Roles"><Shield /> <span>Roles</span></SidebarMenuButton></SidebarMenuItem>}
               {canReadPermissions && <SidebarMenuItem><SidebarMenuButton render={<Link to="/permissions" />} isActive={pathname === '/permissions'} tooltip="Permisos"><KeyRound /> <span>Permisos</span></SidebarMenuButton></SidebarMenuItem>}

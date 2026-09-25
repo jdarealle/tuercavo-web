@@ -65,7 +65,8 @@ La API administra el callback OIDC, la sesión y la cookie HttpOnly. En el prime
 | `/categories` | Consulta, búsqueda, creación, edición y eliminación de categorías. |
 | `/products` | Consulta, filtros, creación, edición y eliminación de productos. |
 | `/suppliers` | Consulta, búsqueda, creación, edición y eliminación de proveedores. |
-| `/users` | Consulta de usuarios, asignación de roles locales, desactivación con revocación de sesiones y reactivación del acceso local. |
+| `/departments` | Consulta y creación de departamentos para administradores. |
+| `/users` | Consulta de usuarios, asignación de roles y departamentos locales, desactivación con revocación de sesiones y reactivación del acceso local. |
 | `/roles` | Consulta, creación, cambio de nombre, retiro, reactivación y administración de permisos de roles. |
 | `/permissions` | Consulta de permisos. |
 | `/health` | Estado de la API y su conexión con la base de datos. |
@@ -73,9 +74,13 @@ La API administra el callback OIDC, la sesión y la cookie HttpOnly. En el prime
 
 La navegación y las acciones disponibles dependen de los permisos entregados por `/api/auth/me`. La API realiza la autorización definitiva de cada operación.
 
+El sidebar muestra el nombre del departamento propio bajo «Tuercavo» y la vista Cuenta lo incluye junto con su UUID. Ambos consultan `GET /api/departments/me`, disponible para cualquier usuario autenticado y con respuesta `null` cuando no hay asignación. En el listado y detalle de usuarios, un administrador resuelve el nombre mediante las consultas administrativas de departamentos; la API no permite consultar los departamentos ajenos a otros roles. Después de cambiar el departamento propio, la SPA actualiza la sesión y la consulta del departamento.
+
 Las acciones de acceso local usan `POST /api/users/{public_id}/deactivate` y `POST /api/users/{public_id}/reactivate`, sin cuerpo, con el permiso `users.update`. Después de desactivar a una persona, se retira su acceso a la aplicación en Entra. Para reactivarla, primero se restablece ese acceso en Entra; deberá iniciar sesión de nuevo. La API impide desactivar o cambiar el rol del último administrador activo.
 
 `PUT /api/users/{public_id}/role` asigna un rol local activo con `users.assign_role` y revoca las sesiones del usuario si cambia. `/api/roles` permite listar y crear roles; `/api/roles/{code}` permite consultarlos, renombrarlos, retirarlos y reactivarlos. `PUT /api/roles/{code}/permissions` reemplaza su conjunto completo de permisos. Roles y permisos son globales: una reducción revoca las sesiones de todos los usuarios de ese rol. `admin` y `consultor` son roles del sistema que permanecen activos; para retirar un rol personalizado primero se deben reasignar todos sus usuarios.
+
+`GET /api/departments` y `GET /api/departments/{public_id}` requieren `departments.read`; `POST /api/departments` requiere `departments.create`. `PUT /api/users/{public_id}/department` requiere `users.assign_department` y envía `department_public_id` con un UUID o `null` para quitar la asignación. Estas operaciones exigen además el rol local `admin`; los tres permisos de departamentos no se pueden conceder a otros roles. La asignación no cambia el rol ni revoca sesiones.
 
 ## Comandos
 

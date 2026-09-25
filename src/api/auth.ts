@@ -5,6 +5,7 @@ const principalSchema = v.object({
   public_id: v.pipe(v.string(), v.uuid()),
   email: v.nullable(v.pipe(v.string(), v.email())),
   full_name: v.nullable(v.string()),
+  department_public_id: v.nullable(v.pipe(v.string(), v.uuid())),
   tenant_id: v.pipe(v.string(), v.uuid()),
   object_id: v.pipe(v.string(), v.uuid()),
   role: v.string(),

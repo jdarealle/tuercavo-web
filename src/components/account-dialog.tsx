@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { Principal } from '@/api/auth'
+import { myDepartmentQueryOptions } from '@/api/departments'
 import { permissions, roles, users } from '@/api/users'
 import { formatDate } from '@/components/catalog-format'
 import { ErrorMessage } from '@/components/catalog-ui'
@@ -17,6 +18,7 @@ function AccountDetail({ label, children }: { label: string; children: ReactNode
 }
 
 export function AccountDialog({ principal, onClose }: { principal: Principal; onClose: () => void }) {
+  const department = useQuery(myDepartmentQueryOptions(principal.department_public_id))
   const user = useQuery({
     queryKey: ['users', 'detail', principal.public_id],
     queryFn: () => users.get(principal.public_id),
@@ -34,6 +36,12 @@ export function AccountDialog({ principal, onClose }: { principal: Principal; on
     staleTime: 300_000,
   })
   const permissionDescriptions = new Map(catalog.data?.map(({ code, description }) => [code, description]) ?? [])
+  const departmentName = principal.department_public_id === null || department.data === null
+    ? 'Sin departamento'
+    : department.isPending
+      ? 'Cargando departamento…'
+      : department.data?.name ?? 'No disponible'
+  const departmentId = department.data === null ? null : department.data?.public_id ?? principal.department_public_id
 
   return <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
     <DialogContent className="max-h-[calc(100dvh-2rem)] min-w-0 overflow-y-auto sm:max-w-2xl lg:max-w-4xl">
@@ -47,6 +55,8 @@ export function AccountDialog({ principal, onClose }: { principal: Principal; on
           <CardContent><dl className="grid min-w-0 gap-4 sm:grid-cols-2">
             <AccountDetail label="Nombre">{principal.full_name || 'No disponible'}</AccountDetail>
             <AccountDetail label="Correo">{principal.email || 'No disponible'}</AccountDetail>
+            <AccountDetail label="Departamento">{departmentName}</AccountDetail>
+            {departmentId && <AccountDetail label="ID del departamento">{departmentId}</AccountDetail>}
             {user.data && <>
               <AccountDetail label="Estado de cuenta"><Badge variant={user.data.is_active ? 'default' : 'secondary'}>{user.data.is_active ? 'Activo' : 'Inactivo'}</Badge></AccountDetail>
               <AccountDetail label="Creado">{formatDate(user.data.created_at)}</AccountDetail>
@@ -83,6 +93,7 @@ export function AccountDialog({ principal, onClose }: { principal: Principal; on
       {user.isError && <ErrorMessage error={user.error} />}
       {role.isError && <ErrorMessage error={role.error} />}
       {catalog.isError && <ErrorMessage error={catalog.error} />}
+      {department.isError && <ErrorMessage error={department.error} />}
       <DialogFooter><Button type="button" variant="outline" onClick={onClose}>Cerrar</Button></DialogFooter>
     </DialogContent>
   </Dialog>

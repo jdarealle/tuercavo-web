@@ -13,7 +13,7 @@ import { AppLayout } from './components/app-layout'
 import { AuthenticatedError } from './components/authenticated-error'
 import { SessionCheckError } from './lib/session-check-error'
 import { DashboardPage } from './pages/dashboard-page'
-import { CategoriesPage, HealthPage, PermissionsPage, ProductsPage, RolesPage, SuppliersPage, UsersPage } from './pages/lazy-pages'
+import { CategoriesPage, DepartmentsPage, HealthPage, PermissionsPage, ProductsPage, RolesPage, SuppliersPage, UsersPage } from './pages/lazy-pages'
 import { LoginPage } from './pages/login-page'
 import { SignedOutPage } from './pages/signed-out-page'
 
@@ -64,6 +64,12 @@ const suppliersRoute = createRoute({
   component: () => <Suspense fallback={<p>Cargando proveedores…</p>}><SuppliersPage principal={authenticatedRoute.useRouteContext().principal} /></Suspense>,
 })
 
+const departmentsRoute = createRoute({
+  getParentRoute: () => authenticatedRoute,
+  path: '/departments',
+  component: () => <Suspense fallback={<p>Cargando departamentos…</p>}><DepartmentsPage principal={authenticatedRoute.useRouteContext().principal} /></Suspense>,
+})
+
 const usersRoute = createRoute({
   getParentRoute: () => authenticatedRoute,
   path: '/users',
@@ -102,7 +108,7 @@ const loginRoute = createRoute({
 
 export const router = createRouter({
   routeTree: rootRoute.addChildren([
-    authenticatedRoute.addChildren([dashboardRoute, categoriesRoute, productsRoute, suppliersRoute, usersRoute, rolesRoute, permissionsRoute, healthRoute]),
+    authenticatedRoute.addChildren([dashboardRoute, categoriesRoute, productsRoute, suppliersRoute, departmentsRoute, usersRoute, rolesRoute, permissionsRoute, healthRoute]),
     loginRoute,
     signedOutRoute,
   ]),

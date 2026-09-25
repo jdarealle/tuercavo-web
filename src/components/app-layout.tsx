@@ -17,9 +17,10 @@ export function AppLayout({ principal }: { principal: Principal }) {
   useEffect(() => {
     if (session.data && (
       session.data.role !== principal.role
+      || session.data.department_public_id !== principal.department_public_id
       || [...session.data.permissions].sort().join(',') !== [...principal.permissions].sort().join(',')
     )) void router.invalidate()
-  }, [principal.permissions, principal.role, router, session.data])
+  }, [principal.department_public_id, principal.permissions, principal.role, router, session.data])
 
   if (session.data === null) return null
   if (session.isError) return <SessionUnavailable onRetry={() => { void session.refetch() }} />

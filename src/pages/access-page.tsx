@@ -18,7 +18,8 @@ import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
 
-const adminRequired = ['users.read', 'users.update', 'users.assign_role', 'roles.read', 'roles.create', 'roles.update', 'roles.assign_permissions', 'permissions.read']
+const adminRequired = ['users.read', 'users.update', 'users.assign_role', 'departments.read', 'departments.create', 'users.assign_department', 'roles.read', 'roles.create', 'roles.update', 'roles.assign_permissions', 'permissions.read']
+const adminOnly = ['departments.read', 'departments.create', 'users.assign_department']
 const consultantAllowed = ['products.read', 'categories.read', 'suppliers.read']
 
 function RoleEditor({ role, onClose }: { role?: Role; onClose: () => void }) {
@@ -112,12 +113,16 @@ function RolePermissionsEditor({ role, principal, onClose }: { role: Role; princ
   const router = useRouter()
   const canReadCatalog = principal.permissions.includes('permissions.read')
   const catalog = useQuery({ queryKey: ['permissions'], queryFn: permissions.list, enabled: canReadCatalog, staleTime: 300_000 })
-  const [selected, setSelected] = useState<string[]>(role.permissions)
-  const [codesText, setCodesText] = useState(role.permissions.join('\n'))
+  const [selected, setSelected] = useState<string[]>(role.code === 'admin'
+    ? [...new Set([...role.permissions, ...adminRequired])]
+    : role.permissions.filter((permission) => !adminOnly.includes(permission)))
+  const [codesText, setCodesText] = useState(selected.join('\n'))
   const [error, setError] = useState('')
   const [confirm, setConfirm] = useState(false)
   const [pending, setPending] = useState<string[]>([])
-  const available = (catalog.data ?? []).filter((item) => role.code !== 'consultor' || consultantAllowed.includes(item.code))
+  const available = (catalog.data ?? []).filter((item) =>
+    (role.code === 'admin' || !adminOnly.includes(item.code))
+    && (role.code !== 'consultor' || consultantAllowed.includes(item.code)))
   const mutation = useMutation({
     mutationFn: (codes: string[]) => roles.setPermissions(role.code, { permissions: codes }),
     onSuccess: (_, codes) => {
@@ -142,6 +147,7 @@ function RolePermissionsEditor({ role, principal, onClose }: { role: Role; princ
     const result = v.safeParse(setPermissionsSchema, { permissions: codes })
     if (!result.success) { setError(result.issues[0]?.message ?? 'Revisa los permisos.'); return }
     if (role.code === 'admin' && adminRequired.some((permission) => !codes.includes(permission))) { setError('admin debe conservar sus permisos de administración.'); return }
+    if (role.code !== 'admin' && codes.some((permission) => adminOnly.includes(permission))) { setError('Los permisos de departamentos son exclusivos de admin.'); return }
     if (role.code === 'consultor' && codes.some((permission) => !consultantAllowed.includes(permission))) { setError('consultor solo admite lectura de productos, categorías y proveedores.'); return }
     if (codes.length === role.permissions.length && codes.every((permission) => role.permissions.includes(permission))) { onClose(); return }
     setError('')
