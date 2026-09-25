@@ -2,6 +2,13 @@
 
 SPA en React y TypeScript para los módulos de catálogo y administración de Tuercavo. Usa TanStack Router para las rutas, TanStack Query para los datos, Valibot para validar respuestas y shadcn/ui con Base UI para la interfaz.
 
+## Stack tecnológico
+
+- React, TypeScript y Vite
+- TanStack Router y TanStack Query
+- Valibot para validación de datos
+- shadcn/ui y Base UI para componentes de interfaz
+
 ## Desarrollo
 
 Se necesita Node.js compatible con `package.json`, pnpm y la API de Tuercavo configurada con Microsoft Entra ID.
