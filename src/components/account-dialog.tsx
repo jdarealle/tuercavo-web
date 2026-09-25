@@ -1,5 +1,6 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { EyeIcon, EyeOffIcon } from 'lucide-react'
 import type { Principal } from '@/api/auth'
 import { myDepartmentQueryOptions } from '@/api/departments'
 import { permissionsListQueryOptions, roles, users } from '@/api/users'
@@ -15,6 +16,27 @@ function AccountDetail({ label, children }: { label: string; children: ReactNode
     <dt className="text-muted-foreground">{label}</dt>
     <dd className="wrap-break-word">{children}</dd>
   </div>
+}
+
+function SensitiveAccountDetail({ label, value }: { label: string; value: string }) {
+  const [visible, setVisible] = useState(false)
+
+  return <AccountDetail label={label}>
+    <span className="flex flex-wrap items-center gap-1">
+      <span className="min-w-0 break-all font-mono">{visible ? value : `••••••••${value.slice(-4)}`}</span>
+      <Button
+        type="button"
+        variant="ghost"
+        size="xs"
+        aria-label={`${visible ? 'Ocultar' : 'Mostrar'} ${label}`}
+        aria-pressed={visible}
+        onClick={() => setVisible((current) => !current)}
+      >
+        {visible ? <EyeOffIcon data-icon="inline-start" /> : <EyeIcon data-icon="inline-start" />}
+        {visible ? 'Ocultar' : 'Mostrar'}
+      </Button>
+    </span>
+  </AccountDetail>
 }
 
 export function AccountDialog({ principal, onClose }: { principal: Principal; onClose: () => void }) {
@@ -69,8 +91,8 @@ export function AccountDialog({ principal, onClose }: { principal: Principal; on
               <AccountDetail label="Estado del rol"><Badge variant={role.data.is_active ? 'default' : 'secondary'}>{role.data.is_active ? 'Activo' : 'Retirado'}</Badge></AccountDetail>
               <AccountDetail label="Tipo de rol">{role.data.is_system ? 'Sistema' : 'Personalizado'}</AccountDetail>
             </>}
-            <AccountDetail label="Tenant de Entra">{principal.tenant_id}</AccountDetail>
-            <AccountDetail label="Object ID de Entra">{principal.object_id}</AccountDetail>
+            <SensitiveAccountDetail label="Tenant de Entra" value={principal.tenant_id} />
+            <SensitiveAccountDetail label="Object ID de Entra" value={principal.object_id} />
           </dl></CardContent>
         </Card>
       </div>
