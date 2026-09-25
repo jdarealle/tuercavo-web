@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { createFileRoute } from '@tanstack/react-router'
 import * as v from 'valibot'
 import { request } from '@/api/auth'
 import { ErrorMessage } from '@/components/catalog-ui'
@@ -6,13 +7,15 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableRow } from '@/components/ui/table'
 
+export const Route = createFileRoute('/_authenticated/health')({ component: HealthPage })
+
 const healthSchema = v.object({ status: v.string() })
 async function check(path: string) {
   const response = await request(path)
   return v.parse(healthSchema, await response.json())
 }
 
-export function HealthPage() {
+function HealthPage() {
   const live = useQuery({ queryKey: ['health', 'live'], queryFn: () => check('/api/health/live'), retry: false })
   const ready = useQuery({ queryKey: ['health', 'ready'], queryFn: () => check('/api/health/ready'), retry: false })
   return <div className="flex min-h-0 flex-1 flex-col gap-6">

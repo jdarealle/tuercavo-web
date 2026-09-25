@@ -45,6 +45,12 @@ export const departments = {
   },
 }
 
+export const departmentsListQueryOptions = queryOptions({
+  queryKey: ['departments', 'list'] as const,
+  queryFn: departments.list,
+  staleTime: 300_000,
+})
+
 export function myDepartmentQueryOptions(publicId: string | null) {
   return queryOptions({
     queryKey: ['departments', 'mine', publicId] as const,

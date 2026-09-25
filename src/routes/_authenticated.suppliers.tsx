@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { createFileRoute } from '@tanstack/react-router'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import * as v from 'valibot'
 import { Ellipsis, Plus } from 'lucide-react'
@@ -14,6 +15,13 @@ import { Field, FieldError, FieldGroup } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
+export const Route = createFileRoute('/_authenticated/suppliers')({
+  component: function SuppliersRoute() {
+    const { principal } = Route.useRouteContext()
+    return <SuppliersPage principal={principal} />
+  },
+})
+
 function SupplierEditor({ supplier, onClose }: { supplier?: Supplier; onClose: () => void }) {
   const queryClient = useQueryClient()
   const [status, setStatus] = useState<CatalogStatus>(supplier?.status ?? 'active')
@@ -27,9 +35,11 @@ function SupplierEditor({ supplier, onClose }: { supplier?: Supplier; onClose: (
       }
       return suppliers.update(supplier.public_id, changes)
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['suppliers'] })
-      void queryClient.invalidateQueries({ queryKey: ['products'] })
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['suppliers'] }),
+        queryClient.invalidateQueries({ queryKey: ['products'] }),
+      ])
       onClose()
     },
   })
@@ -117,7 +127,7 @@ function SupplierDetails({ id, onClose }: { id: string; onClose: () => void }) {
   </Dialog>
 }
 
-export function SuppliersPage({ principal }: { principal: Principal }) {
+function SuppliersPage({ principal }: { principal: Principal }) {
   const canRead = principal.permissions.includes('suppliers.read')
   const canCreate = principal.permissions.includes('suppliers.create')
   const canUpdate = principal.permissions.includes('suppliers.update')
@@ -131,9 +141,11 @@ export function SuppliersPage({ principal }: { principal: Principal }) {
   const list = useQuery({ queryKey: ['suppliers', 'list', filters], queryFn: () => suppliers.list(filters), enabled: canRead, placeholderData: keepPreviousData })
   const deletion = useMutation({
     mutationFn: (id: string) => suppliers.remove(id),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['suppliers'] })
-      void queryClient.invalidateQueries({ queryKey: ['products'] })
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['suppliers'] }),
+        queryClient.invalidateQueries({ queryKey: ['products'] }),
+      ])
       if (filters.page && filters.page > 1 && list.data?.data.length === 1) setFilters((current) => ({ ...current, page: Math.max(1, (current.page ?? 1) - 1) }))
       setToDelete(null)
     },

@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import { FolderTree, Package, RefreshCw, Truck, Users, type LucideIcon } from 'lucide-react'
 import type { Principal } from '@/api/auth'
 import { categories, products, suppliers } from '@/api/catalog'
@@ -9,6 +9,13 @@ import { Button, buttonVariants } from '@/components/ui/button'
 import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+
+export const Route = createFileRoute('/_authenticated/')({
+  component: function DashboardRoute() {
+    const { principal } = Route.useRouteContext()
+    return <DashboardPage principal={principal} />
+  },
+})
 
 type ModulePath = '/products' | '/categories' | '/suppliers' | '/users'
 
@@ -33,7 +40,7 @@ function MetricCard({ title, total, pending, error, icon: Icon, to }: {
   </Card>
 }
 
-export function DashboardPage({ principal }: { principal: Principal }) {
+function DashboardPage({ principal }: { principal: Principal }) {
   const queryClient = useQueryClient()
   const canReadProducts = principal.permissions.includes('products.read')
   const canReadCategories = principal.permissions.includes('categories.read')

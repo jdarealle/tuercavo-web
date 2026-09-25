@@ -1,9 +1,10 @@
 import { useState, type FormEvent } from 'react'
+import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import * as v from 'valibot'
 import { Ellipsis, Plus } from 'lucide-react'
 import { ApiError, type Principal } from '@/api/auth'
-import { createDepartmentSchema, departments, type CreateDepartment } from '@/api/departments'
+import { createDepartmentSchema, departments, departmentsListQueryOptions, type CreateDepartment } from '@/api/departments'
 import { ErrorMessage, HelpLabel } from '@/components/catalog-ui'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -12,13 +13,20 @@ import { Field, FieldError, FieldGroup } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
+export const Route = createFileRoute('/_authenticated/departments')({
+  component: function DepartmentsRoute() {
+    const { principal } = Route.useRouteContext()
+    return <DepartmentsPage principal={principal} />
+  },
+})
+
 function DepartmentEditor({ onClose }: { onClose: () => void }) {
   const queryClient = useQueryClient()
   const [error, setError] = useState('')
   const mutation = useMutation({
     mutationFn: (input: CreateDepartment) => departments.create(input),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['departments'] })
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['departments'] })
       onClose()
     },
   })
@@ -67,12 +75,12 @@ function DepartmentDetails({ id, onClose }: { id: string; onClose: () => void })
   </Dialog>
 }
 
-export function DepartmentsPage({ principal }: { principal: Principal }) {
+function DepartmentsPage({ principal }: { principal: Principal }) {
   const canRead = principal.role === 'admin' && principal.permissions.includes('departments.read')
   const canCreate = principal.role === 'admin' && principal.permissions.includes('departments.create')
   const [createOpen, setCreateOpen] = useState(false)
   const [viewId, setViewId] = useState<string | null>(null)
-  const list = useQuery({ queryKey: ['departments', 'list'], queryFn: departments.list, enabled: canRead, staleTime: 300_000 })
+  const list = useQuery({ ...departmentsListQueryOptions, enabled: canRead })
 
   if (!canRead) return <p>No tienes permiso para consultar departamentos.</p>
 

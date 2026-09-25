@@ -1,3 +1,4 @@
+import { queryOptions } from '@tanstack/react-query'
 import * as v from 'valibot'
 import { request } from './auth'
 
@@ -77,3 +78,15 @@ export const roles = {
   setPermissions: (code: string, input: SetPermissions) => json(`/api/roles/${encodeURIComponent(code)}/permissions`, roleSchema, jsonBody('PUT', v.parse(setPermissionsSchema, input))),
 }
 export const permissions = { list: () => json('/api/permissions', v.array(permissionSchema)) }
+
+export const rolesListQueryOptions = queryOptions({
+  queryKey: ['roles', 'list'] as const,
+  queryFn: roles.list,
+  staleTime: 300_000,
+})
+
+export const permissionsListQueryOptions = queryOptions({
+  queryKey: ['permissions'] as const,
+  queryFn: permissions.list,
+  staleTime: 300_000,
+})

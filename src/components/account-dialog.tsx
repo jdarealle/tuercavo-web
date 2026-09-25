@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { Principal } from '@/api/auth'
 import { myDepartmentQueryOptions } from '@/api/departments'
-import { permissions, roles, users } from '@/api/users'
+import { permissionsListQueryOptions, roles, users } from '@/api/users'
 import { formatDate } from '@/components/catalog-format'
 import { ErrorMessage } from '@/components/catalog-ui'
 import { Badge } from '@/components/ui/badge'
@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 function AccountDetail({ label, children }: { label: string; children: ReactNode }) {
   return <div className="min-w-0">
     <dt className="text-muted-foreground">{label}</dt>
-    <dd className="break-words">{children}</dd>
+    <dd className="wrap-break-word">{children}</dd>
   </div>
 }
 
@@ -29,12 +29,7 @@ export function AccountDialog({ principal, onClose }: { principal: Principal; on
     queryFn: () => roles.get(principal.role),
     enabled: principal.permissions.includes('roles.read'),
   })
-  const catalog = useQuery({
-    queryKey: ['permissions'],
-    queryFn: permissions.list,
-    enabled: principal.permissions.includes('permissions.read'),
-    staleTime: 300_000,
-  })
+  const catalog = useQuery({ ...permissionsListQueryOptions, enabled: principal.permissions.includes('permissions.read') })
   const permissionDescriptions = new Map(catalog.data?.map(({ code, description }) => [code, description]) ?? [])
   const departmentName = principal.department_public_id === null || department.data === null
     ? 'Sin departamento'
@@ -85,7 +80,7 @@ export function AccountDialog({ principal, onClose }: { principal: Principal; on
           {principal.permissions.length ? <ul className="grid min-w-0 gap-3 sm:grid-cols-2">
             {principal.permissions.map((code) => <li key={code} className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-start sm:gap-2">
               <Badge variant="outline" className="max-w-full shrink-0 whitespace-normal break-all sm:max-w-[50%]">{code}</Badge>
-              {catalog.isSuccess && <p className="min-w-0 break-words text-muted-foreground">{permissionDescriptions.get(code) ?? 'Sin descripción.'}</p>}
+              {catalog.isSuccess && <p className="min-w-0 wrap-break-word text-muted-foreground">{permissionDescriptions.get(code) ?? 'Sin descripción.'}</p>}
             </li>)}
           </ul> : <p className="text-muted-foreground">Sin permisos.</p>}
         </CardContent>

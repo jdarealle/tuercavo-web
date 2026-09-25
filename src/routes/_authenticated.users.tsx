@@ -1,10 +1,11 @@
 import { useState } from 'react'
+import { createFileRoute } from '@tanstack/react-router'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import * as v from 'valibot'
 import { Ellipsis } from 'lucide-react'
 import { ApiError, type Principal } from '@/api/auth'
-import { departments, myDepartmentQueryOptions } from '@/api/departments'
-import { assignDepartmentSchema, assignRoleSchema, roles, users, type User } from '@/api/users'
+import { departments, departmentsListQueryOptions, myDepartmentQueryOptions } from '@/api/departments'
+import { assignDepartmentSchema, assignRoleSchema, rolesListQueryOptions, users, type User } from '@/api/users'
 import { ErrorMessage, HelpLabel, PageNavigation } from '@/components/catalog-ui'
 import { formatDate } from '@/components/catalog-format'
 import {
@@ -19,6 +20,13 @@ import { Field, FieldError, FieldGroup } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+
+export const Route = createFileRoute('/_authenticated/users')({
+  component: function UsersRoute() {
+    const { principal } = Route.useRouteContext()
+    return <UsersPage principal={principal} />
+  },
+})
 
 function userLabel(user: User): string {
   return user.full_name ?? user.email ?? `Usuario ${user.entra_object_id.slice(0, 8)}`
@@ -70,18 +78,18 @@ function UserDetails({ id, principal, onClose }: { id: string; principal: Princi
 function UserRoleEditor({ user, principal, onClose }: { user: User; principal: Principal; onClose: () => void }) {
   const queryClient = useQueryClient()
   const canReadRoles = principal.permissions.includes('roles.read')
-  const availableRoles = useQuery({ queryKey: ['roles', 'list'], queryFn: roles.list, enabled: canReadRoles, staleTime: 300_000 })
+  const availableRoles = useQuery({ ...rolesListQueryOptions, enabled: canReadRoles })
   const [role, setRole] = useState(user.role)
   const [error, setError] = useState('')
   const mutation = useMutation({
     mutationFn: (code: string) => users.assignRole(user.public_id, code),
-    onSuccess: (updated) => {
+    onSuccess: async (updated) => {
       if (updated.public_id === principal.public_id && updated.role !== user.role) {
         queryClient.clear()
         window.location.replace('/login')
         return
       }
-      void queryClient.invalidateQueries({ queryKey: ['users'] })
+      await queryClient.invalidateQueries({ queryKey: ['users'] })
       onClose()
     },
   })
@@ -119,17 +127,18 @@ function UserRoleEditor({ user, principal, onClose }: { user: User; principal: P
 
 function UserDepartmentEditor({ user, principal, onClose }: { user: User; principal: Principal; onClose: () => void }) {
   const queryClient = useQueryClient()
-  const availableDepartments = useQuery({ queryKey: ['departments', 'list'], queryFn: departments.list, staleTime: 300_000 })
+  const availableDepartments = useQuery(departmentsListQueryOptions)
   const [selected, setSelected] = useState(user.department_public_id ?? 'none')
   const [error, setError] = useState('')
   const mutation = useMutation({
     mutationFn: (departmentId: string | null) => users.assignDepartment(user.public_id, departmentId),
-    onSuccess: (updated) => {
-      void queryClient.invalidateQueries({ queryKey: ['users'] })
+    onSuccess: async (updated) => {
+      const refreshes = [queryClient.invalidateQueries({ queryKey: ['users'] })]
       if (updated.public_id === principal.public_id) {
-        void queryClient.invalidateQueries({ queryKey: ['auth', 'me'] })
-        void queryClient.invalidateQueries({ queryKey: ['departments', 'mine'] })
+        refreshes.push(queryClient.invalidateQueries({ queryKey: ['auth', 'me'] }))
+        refreshes.push(queryClient.invalidateQueries({ queryKey: ['departments', 'mine'] }))
       }
+      await Promise.all(refreshes)
       onClose()
     },
   })
@@ -175,7 +184,7 @@ function UserDepartmentEditor({ user, principal, onClose }: { user: User; princi
   </Dialog>
 }
 
-export function UsersPage({ principal }: { principal: Principal }) {
+function UsersPage({ principal }: { principal: Principal }) {
   const canRead = principal.permissions.includes('users.read')
   const canUpdate = principal.permissions.includes('users.update')
   const canAssignRole = principal.permissions.includes('users.assign_role')
@@ -188,19 +197,20 @@ export function UsersPage({ principal }: { principal: Principal }) {
   const [roleUser, setRoleUser] = useState<User | null>(null)
   const [departmentUser, setDepartmentUser] = useState<User | null>(null)
   const list = useQuery({ queryKey: ['users', 'list', page], queryFn: () => users.list(page), enabled: canRead, placeholderData: keepPreviousData })
-  const departmentCatalog = useQuery({ queryKey: ['departments', 'list'], queryFn: departments.list, enabled: canRead && canReadDepartments, staleTime: 300_000 })
+  const departmentCatalog = useQuery({ ...departmentsListQueryOptions, enabled: canRead && canReadDepartments })
   const ownDepartment = useQuery(myDepartmentQueryOptions(principal.department_public_id))
   const departmentNames = new Map(departmentCatalog.data?.map((department) => [department.public_id, department.name]) ?? [])
   const access = useMutation({
     mutationFn: (user: User) => user.is_active ? users.deactivate(user.public_id) : users.reactivate(user.public_id),
-    onSuccess: (updated) => {
+    onSuccess: async (updated) => {
       if (updated.public_id === principal.public_id && !updated.is_active) {
         queryClient.clear()
         window.location.replace('/login')
         return
       }
-      void queryClient.invalidateQueries({ queryKey: ['users'] })
-      if (updated.public_id === principal.public_id) void queryClient.invalidateQueries({ queryKey: ['auth', 'me'] })
+      const refreshes = [queryClient.invalidateQueries({ queryKey: ['users'] })]
+      if (updated.public_id === principal.public_id) refreshes.push(queryClient.invalidateQueries({ queryKey: ['auth', 'me'] }))
+      await Promise.all(refreshes)
       setAccessUser(null)
     },
   })

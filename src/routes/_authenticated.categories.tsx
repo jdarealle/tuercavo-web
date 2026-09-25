@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { createFileRoute } from '@tanstack/react-router'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import * as v from 'valibot'
 import { Ellipsis, Plus } from 'lucide-react'
@@ -18,6 +19,13 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
+export const Route = createFileRoute('/_authenticated/categories')({
+  component: function CategoriesRoute() {
+    const { principal } = Route.useRouteContext()
+    return <CategoriesPage principal={principal} />
+  },
+})
+
 function CategoryEditor({ category, onClose }: { category?: Category; onClose: () => void }) {
   const queryClient = useQueryClient()
   const [status, setStatus] = useState<CatalogStatus>(category?.status ?? 'active')
@@ -31,9 +39,11 @@ function CategoryEditor({ category, onClose }: { category?: Category; onClose: (
       if (input.status !== category.status) changes.status = input.status
       return categories.update(category.public_id, changes)
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['categories'] })
-      void queryClient.invalidateQueries({ queryKey: ['products'] })
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['categories'] }),
+        queryClient.invalidateQueries({ queryKey: ['products'] }),
+      ])
       onClose()
     },
   })
@@ -117,7 +127,7 @@ function CategoryDetails({ id, onClose }: { id: string; onClose: () => void }) {
   </Dialog>
 }
 
-export function CategoriesPage({ principal }: { principal: Principal }) {
+function CategoriesPage({ principal }: { principal: Principal }) {
   const canRead = principal.permissions.includes('categories.read')
   const canCreate = principal.permissions.includes('categories.create')
   const canUpdate = principal.permissions.includes('categories.update')
@@ -136,8 +146,8 @@ export function CategoriesPage({ principal }: { principal: Principal }) {
   })
   const deletion = useMutation({
     mutationFn: (id: string) => categories.remove(id),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['categories'] })
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['categories'] })
       if (filters.page && filters.page > 1 && list.data?.data.length === 1) setFilters((current) => ({ ...current, page: Math.max(1, (current.page ?? 1) - 1) }))
       setToDelete(null)
     },

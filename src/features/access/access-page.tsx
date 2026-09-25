@@ -5,7 +5,7 @@ import * as v from 'valibot'
 import { Ellipsis, Plus } from 'lucide-react'
 import type { Principal } from '@/api/auth'
 import { fieldErrors } from '@/api/catalog'
-import { createRoleSchema, permissions, roles, setPermissionsSchema, updateRoleSchema, type Role } from '@/api/users'
+import { createRoleSchema, permissionsListQueryOptions, roles, rolesListQueryOptions, setPermissionsSchema, updateRoleSchema, type Role } from '@/api/users'
 import { ErrorMessage, HelpLabel } from '@/components/catalog-ui'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
@@ -27,7 +27,7 @@ function RoleEditor({ role, onClose }: { role?: Role; onClose: () => void }) {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const mutation = useMutation({
     mutationFn: (input: { code: string; name: string }) => role ? roles.update(role.code, { name: input.name }) : roles.create(input),
-    onSuccess: () => { void queryClient.invalidateQueries({ queryKey: ['roles'] }); onClose() },
+    onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ['roles'] }); onClose() },
   })
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -91,7 +91,7 @@ function RoleStatusDialog({ role, onClose }: { role: Role; onClose: () => void }
   const queryClient = useQueryClient()
   const mutation = useMutation({
     mutationFn: () => roles.update(role.code, { is_active: !role.is_active }),
-    onSuccess: () => { void queryClient.invalidateQueries({ queryKey: ['roles'] }); onClose() },
+    onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ['roles'] }); onClose() },
   })
   const retiring = role.is_active
   return <AlertDialog open onOpenChange={(open) => { if (!open && !mutation.isPending) onClose() }}>
@@ -112,7 +112,7 @@ function RolePermissionsEditor({ role, principal, onClose }: { role: Role; princ
   const queryClient = useQueryClient()
   const router = useRouter()
   const canReadCatalog = principal.permissions.includes('permissions.read')
-  const catalog = useQuery({ queryKey: ['permissions'], queryFn: permissions.list, enabled: canReadCatalog, staleTime: 300_000 })
+  const catalog = useQuery({ ...permissionsListQueryOptions, enabled: canReadCatalog })
   const [selected, setSelected] = useState<string[]>(role.code === 'admin'
     ? [...new Set([...role.permissions, ...adminRequired])]
     : role.permissions.filter((permission) => !adminOnly.includes(permission)))
@@ -125,18 +125,19 @@ function RolePermissionsEditor({ role, principal, onClose }: { role: Role; princ
     && (role.code !== 'consultor' || consultantAllowed.includes(item.code)))
   const mutation = useMutation({
     mutationFn: (codes: string[]) => roles.setPermissions(role.code, { permissions: codes }),
-    onSuccess: (_, codes) => {
+    onSuccess: async (_, codes) => {
       const removed = role.permissions.some((permission) => !codes.includes(permission))
       if (role.code === principal.role && removed) {
         queryClient.clear()
         window.location.replace('/login')
         return
       }
-      void queryClient.invalidateQueries({ queryKey: ['roles'] })
+      const refreshes = [queryClient.invalidateQueries({ queryKey: ['roles'] })]
       if (role.code === principal.role) {
-        void queryClient.invalidateQueries({ queryKey: ['auth', 'me'] })
-        void router.invalidate()
+        refreshes.push(queryClient.invalidateQueries({ queryKey: ['auth', 'me'] }))
       }
+      await Promise.all(refreshes)
+      if (role.code === principal.role) await router.invalidate()
       onClose()
     },
     onError: () => setConfirm(false),
@@ -207,7 +208,7 @@ export function RolesPage({ principal }: { principal: Principal }) {
   const [viewCode, setViewCode] = useState<string | null>(null)
   const [statusRole, setStatusRole] = useState<Role | null>(null)
   const [permissionRole, setPermissionRole] = useState<Role | null>(null)
-  const list = useQuery({ queryKey: ['roles', 'list'], queryFn: roles.list, enabled: canRead, staleTime: 300_000 })
+  const list = useQuery({ ...rolesListQueryOptions, enabled: canRead })
   if (!canRead && !canCreate) return <p>No tienes permiso para administrar roles.</p>
   return <div className="flex min-h-0 flex-1 flex-col gap-6">
     <div className="flex flex-wrap items-start justify-between gap-4"><div><h1 className="text-2xl font-semibold">Roles</h1><p className="text-sm text-muted-foreground">Los roles y sus permisos se administran en Tuercavo y se aplican a todos los tenants.</p></div>{canCreate && <Button onClick={() => setEditor('new')}><Plus data-icon="inline-start" /> Nuevo rol</Button>}</div>
@@ -238,7 +239,7 @@ export function RolesPage({ principal }: { principal: Principal }) {
 
 export function PermissionsPage({ principal }: { principal: Principal }) {
   const canRead = principal.permissions.includes('permissions.read')
-  const list = useQuery({ queryKey: ['permissions'], queryFn: permissions.list, enabled: canRead, staleTime: 300_000 })
+  const list = useQuery({ ...permissionsListQueryOptions, enabled: canRead })
   if (!canRead) return <p>No tienes permiso para consultar permisos.</p>
   return <div className="flex min-h-0 flex-1 flex-col gap-6">
     <div><h1 className="text-2xl font-semibold">Permisos</h1><p className="text-sm text-muted-foreground">Operaciones disponibles en la API para configurar los roles.</p></div>

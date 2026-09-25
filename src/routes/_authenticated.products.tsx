@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { createFileRoute } from '@tanstack/react-router'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import * as v from 'valibot'
 import { Ellipsis, Plus } from 'lucide-react'
@@ -18,6 +19,13 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
+
+export const Route = createFileRoute('/_authenticated/products')({
+  component: function ProductsRoute() {
+    const { principal } = Route.useRouteContext()
+    return <ProductsPage principal={principal} />
+  },
+})
 
 const unitItems = Object.entries(unitLabels).map(([value, label]) => ({ value, label }))
 
@@ -90,8 +98,8 @@ function ProductEditor({ product, categories, suppliers, canReadCategories, canR
       }
       return products.update(product.public_id, changes)
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['products'] })
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['products'] })
       onClose()
     },
   })
@@ -215,7 +223,7 @@ function ProductEditor({ product, categories, suppliers, canReadCategories, canR
   </Sheet>
 }
 
-export function ProductsPage({ principal }: { principal: Principal }) {
+function ProductsPage({ principal }: { principal: Principal }) {
   const canRead = principal.permissions.includes('products.read')
   const canCreate = principal.permissions.includes('products.create')
   const canUpdate = principal.permissions.includes('products.update')
@@ -233,8 +241,8 @@ export function ProductsPage({ principal }: { principal: Principal }) {
   const supplierList = useQuery({ queryKey: ['suppliers', 'all'], queryFn: allSuppliers, enabled: canRead && canReadSuppliers, staleTime: 300_000 })
   const deletion = useMutation({
     mutationFn: (id: string) => products.remove(id),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['products'] })
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['products'] })
       if (filters.page && filters.page > 1 && list.data?.data.length === 1) setFilters((current) => ({ ...current, page: Math.max(1, (current.page ?? 1) - 1) }))
       setToDelete(null)
     },
